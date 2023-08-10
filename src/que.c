@@ -3,24 +3,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include <pthread.h>
 
-#include "cfgmgr.h"
-#include "logger.h"
 #include "que.h"
-
-static pthread_mutex_t      _mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int qInit(que_handle_t * hque, uint32_t size) {
     hque->pQueue = (que_item_t *)malloc(sizeof(que_item_t) * size);
 
     if (hque->pQueue == NULL) {
-        lgLogFatal("qInit() - Failed to allocate queue memory of size %u", size);
         return -1;
     }
 
-    lgLogInfo("qInit() - Instantiated queue with %u items", size);
-    
     hque->queueLength = size;
 
     hque->headIndex = 0;
@@ -35,30 +27,15 @@ void qDestroy(que_handle_t * hque) {
 }
 
 uint32_t qGetQueLength(que_handle_t * hque) {
-    uint32_t            length;
-
-	pthread_mutex_lock(&_mutex);
-    length = hque->queueLength;
-	pthread_mutex_unlock(&_mutex);
-
-    return length;
+    return hque->queueLength;
 }
 
 uint32_t qGetNumItems(que_handle_t * hque) {
-    uint32_t            numItems;
-
-	pthread_mutex_lock(&_mutex);
-    numItems = hque->numItems;
-	pthread_mutex_unlock(&_mutex);
-
-    return numItems;
+    return hque->numItems;
 }
 
 que_item_t * qGetItem(que_handle_t * hque, que_item_t * item) {
-	pthread_mutex_lock(&_mutex);
-
     if (hque->numItems == 0) {
-        lgLogError("qGetItem() - Queue is empty");
         return NULL;
     }
 
@@ -66,20 +43,14 @@ que_item_t * qGetItem(que_handle_t * hque, que_item_t * item) {
     hque->numItems--;
 
     if (hque->headIndex == hque->queueLength) {
-        lgLogDebug("qGetItem() - Head wrap around");
         hque->headIndex = 0;
     }
-
-	pthread_mutex_unlock(&_mutex);
 
     return item;
 }
 
 int qPutItem(que_handle_t * hque, que_item_t item) {
-	pthread_mutex_lock(&_mutex);
-
     if (hque->numItems == hque->queueLength) {
-        lgLogError("qPutItem() - Queue is full");
         return -1;
     }
 
@@ -87,11 +58,8 @@ int qPutItem(que_handle_t * hque, que_item_t item) {
     hque->numItems++;
 
     if (hque->tailIndex == hque->queueLength) {
-        lgLogDebug("qPutItem() - Tail wrap around");
         hque->tailIndex = 0;
     }
-
-	pthread_mutex_unlock(&_mutex);
 
     return 0;
 }
