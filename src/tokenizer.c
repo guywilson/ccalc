@@ -5,44 +5,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-#define BASE_10                 10
-#define BASE_16                 16
-#define BASE_8                   8
-#define BASE_2                   2
-
-#define DECIMAL                 BASE_10
-#define HEXADECIMAL             BASE_16
-#define OCTAL                   BASE_8
-#define BINARY                  BASE_2
-
-typedef struct {
-    int         startIndex;
-    int         endIndex;
-    int         expressionLen;
-    int         base;
-
-    char *      pszExpression;
-}
-tokenizer_t;
-
-typedef enum {
-    token_operator_plus,
-    token_operator_minus,
-    token_operator_multiply,
-    token_operator_divide,
-    token_function,
-    token_constant,
-    token_operand
-}
-token_type_t;
-
-typedef struct {
-    int                     length;
-    token_type_t            type;
-
-    char *                  pszToken;
-}
-token_t;
+#include "tokenizer.h"
 
 static const char * pszBraces = "({[]})";
 
@@ -400,8 +363,45 @@ token_t * tzrNextToken(tokenizer_t * t) {
 
     t->startIndex = t->endIndex;
 
-    
-    t = TokenFactory.createToken(token, this._base);
+    if (isOperand(t, token)) {
+        token->type = token_operand;
+    }
+    else if (isOperatorPlus(token)) {
+        token->type = token_operator_plus;
+    }
+    else if (isOperatorMinus(token)) {
+        token->type = token_operator_minus;
+    }
+    else if (isOperatorMultiply(token)) {
+        token->type = token_operator_multiply;
+    }
+    else if (isOperatorDivide(token)) {
+        token->type = token_operator_divide;
+    }
+    else if (isOperatorMod(token)) {
+        token->type = token_operator_mod;
+    }
+    else if (isOperatorPower(token)) {
+        token->type = token_operator_power;
+    }
+    else if (isOperatorAND(token)) {
+        token->type = token_operator_AND;
+    }
+    else if (isOperatorOR(token)) {
+        token->type = token_operator_OR;
+    }
+    else if (isOperatorXOR(token)) {
+        token->type = token_operator_XOR;
+    }
+    else if (isConstant(token)) {
+        token->type = token_constant;
+    }
+    else if (isFunction(token)) {
+        token->type = token_function;
+    }
+    else if (isBrace(token)) {
+        token->type = token_brace;
+    }
 
     return token;
 }
