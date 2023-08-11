@@ -6,7 +6,7 @@
 
 #include "stack.h"
 
-int stackInit(stack_handle_t * hstack, uint32_t size) {
+int stackInit(stack_handle_t * hstack, int size) {
     hstack->pStack = (stack_item_t *)malloc(sizeof(stack_item_t) * size);
 
     if (hstack->pStack == NULL) {
@@ -26,11 +26,11 @@ void stackDestroy(stack_handle_t * hstack) {
     free(hstack->pStack);
 }
 
-uint32_t stackGetLength(stack_handle_t * hstack) {
+int stackGetLength(stack_handle_t * hstack) {
     return hstack->stackLength;
 }
 
-uint32_t stackGetNumItems(stack_handle_t * hstack) {
+int stackGetNumItems(stack_handle_t * hstack) {
     return hstack->numItems;
 }
 
@@ -39,11 +39,11 @@ stack_item_t * stackPop(stack_handle_t * hstack, stack_item_t * item) {
         return NULL;
     }
 
-    memcpy(item, &hstack->pStack[hstack->headIndex++], sizeof(stack_item_t));
+    memcpy(item, &hstack->pStack[hstack->headIndex--], sizeof(stack_item_t));
     hstack->numItems--;
 
-    if (hstack->headIndex == hstack->stackLength) {
-        hstack->headIndex = 0;
+    if (hstack->headIndex == -1) {
+        return NULL;
     }
 
     return item;
@@ -54,11 +54,11 @@ int stackPush(stack_handle_t * hstack, stack_item_t item) {
         return -1;
     }
 
-    memcpy(&hstack->pStack[hstack->tailIndex++], &item, sizeof(stack_item_t));
+    memcpy(&hstack->pStack[hstack->headIndex++], &item, sizeof(stack_item_t));
     hstack->numItems++;
 
-    if (hstack->tailIndex == hstack->stackLength) {
-        hstack->tailIndex = 0;
+    if (hstack->headIndex == hstack->stackLength) {
+        return -1;
     }
 
     return 0;
