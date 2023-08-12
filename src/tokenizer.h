@@ -11,16 +11,6 @@
 #define OCTAL                   BASE_8
 #define BINARY                  BASE_2
 
-typedef struct {
-    int         startIndex;
-    int         endIndex;
-    int         expressionLen;
-    int         base;
-
-    char *      pszExpression;
-}
-tokenizer_t;
-
 typedef enum {
     token_operator_plus,
     token_operator_minus,
@@ -38,12 +28,43 @@ typedef enum {
 }
 token_type_t;
 
+typedef enum {
+    associativity_left,
+    associativity_right
+}
+associativity;
+
+typedef struct {
+    int         startIndex;
+    int         endIndex;
+    int         expressionLen;
+    int         base;
+
+    char *      pszExpression;
+}
+tokenizer_t;
+
 typedef struct {
     int                     length;
     token_type_t            type;
 
     char *                  pszToken;
+
+    int                     operatorPrescedence;
+    associativity           operatorAssociativity;
 }
 token_t;
+
+bool            isOperand(tokenizer_t * t, token_t * token);
+bool            isBrace(token_t * token);
+bool            isOperator(token_t * token);
+bool            isConstant(token_t * token);
+bool            isFunction(token_t * token);
+associativity   getOperatorAssociativity(token_t * t);
+int             getOperatorPrescedense(token_t * t);
+void            tzrInit(tokenizer_t * t, char * pszExpression, int base);
+void            tzrFinish(tokenizer_t * t);
+bool            tzrHasMoreTokens(tokenizer_t * t);
+token_t *       tzrNextToken(tokenizer_t * t);
 
 #endif

@@ -1,10 +1,68 @@
-#include <stdio.h> 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 
-#include "stack.h"
+#include "list.h"
+
+int qInit(que_handle_t * hque, uint32_t size) {
+    hque->pQueue = (que_item_t *)malloc(sizeof(que_item_t) * size);
+
+    if (hque->pQueue == NULL) {
+        return -1;
+    }
+
+    hque->queueLength = size;
+
+    hque->headIndex = 0;
+    hque->tailIndex = 0;
+    hque->numItems = 0;
+
+    return 0;
+}
+
+void qDestroy(que_handle_t * hque) {
+    free(hque->pQueue);
+}
+
+uint32_t qGetQueLength(que_handle_t * hque) {
+    return hque->queueLength;
+}
+
+uint32_t qGetNumItems(que_handle_t * hque) {
+    return hque->numItems;
+}
+
+que_item_t * qGetItem(que_handle_t * hque, que_item_t * item) {
+    if (hque->numItems == 0) {
+        return NULL;
+    }
+
+    memcpy(item, &hque->pQueue[hque->headIndex++], sizeof(que_item_t));
+    hque->numItems--;
+
+    if (hque->headIndex == hque->queueLength) {
+        hque->headIndex = 0;
+    }
+
+    return item;
+}
+
+int qPutItem(que_handle_t * hque, que_item_t item) {
+    if (hque->numItems == hque->queueLength) {
+        return -1;
+    }
+
+    memcpy(&hque->pQueue[hque->tailIndex++], &item, sizeof(que_item_t));
+    hque->numItems++;
+
+    if (hque->tailIndex == hque->queueLength) {
+        hque->tailIndex = 0;
+    }
+
+    return 0;
+}
 
 int stackInit(stack_handle_t * hstack, int size) {
     hstack->pStack = (stack_item_t *)malloc(sizeof(stack_item_t) * size);

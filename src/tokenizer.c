@@ -46,50 +46,6 @@ static bool isUniversalDigit(char ch) {
         isBinaryDigit(ch));
 }
 
-static bool isOperand(tokenizer_t * t, token_t * token) {
-    int		i;
-    char    ch;
-    bool	ret = true;
-
-    if (token->pszToken[0] == '-' && token->length == 1) {
-        // Must be the '-' operator...
-        return false;
-    }
-    else {
-        for (i = 0;i < token->length;i++) {
-            ch = token->pszToken[i];
-
-            switch (t->base) {
-                case DECIMAL:
-                    if (!isDecimalDigit(ch)) {
-                        return false;
-                    }
-                    break;
-                    
-                case HEXADECIMAL:
-                    if (!isHexadecimalDigit(ch)) {
-                        return false;
-                    }
-                    break;
-                    
-                case BINARY:
-                    if (!isBinaryDigit(ch)) {
-                        return false;
-                    }
-                    break;
-                    
-                case OCTAL:
-                    if (!isOctalDigit(ch)) {
-                        return false;
-                    }
-                    break;
-            }
-        }
-    }
-
-    return true;
-}
-
 static bool isOperatorPlus(token_t * token) {
     return (token->pszToken[0] == '+');
 }
@@ -135,31 +91,6 @@ static bool isOperatorXOR(token_t * token) {
     return (token->pszToken[0] == '~');
 }
 
-static bool isOperator(token_t * token) {
-    return 
-        (isOperatorPlus(token)      || 
-        isOperatorMinus(token)      || 
-        isOperatorMultiply(token)   || 
-        isOperatorDivide(token)     || 
-        isOperatorMod(token)        || 
-        isOperatorPower(token)      || 
-        isOperatorAND(token)        || 
-        isOperatorOR(token)         || 
-        isOperatorXOR(token));
-}
-
-static bool isBrace(token_t * token) {
-    int             i;
-
-    for (i = 0;i < strlen(pszBraces);i++) {
-        if (token->pszToken[0] == pszBraces[i]) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 static bool isConstantPi(token_t * token) {
     if (strncmp(token->pszToken, "pi", 2) == 0) {
         return true;
@@ -170,10 +101,6 @@ static bool isConstantPi(token_t * token) {
 
 static bool isConstantC(token_t * token) {
     return (token->pszToken[0] == 'c' || token->pszToken[0] == 'C');
-}
-
-static bool isConstant(token_t * token) {
-    return (isConstantPi(token) || isConstantC(token));
 }
 
 static bool isFunctionSine(token_t * token) {
@@ -220,7 +147,81 @@ static bool isFunctionMemory(token_t * token) {
     return (strncmp(token->pszToken, "mem", 3) == 0);
 }
 
-static bool isFunction(token_t * token) {
+
+bool isOperand(tokenizer_t * t, token_t * token) {
+    int		i;
+    char    ch;
+    bool	ret = true;
+
+    if (token->pszToken[0] == '-' && token->length == 1) {
+        // Must be the '-' operator...
+        return false;
+    }
+    else {
+        for (i = 0;i < token->length;i++) {
+            ch = token->pszToken[i];
+
+            switch (t->base) {
+                case DECIMAL:
+                    if (!isDecimalDigit(ch)) {
+                        return false;
+                    }
+                    break;
+                    
+                case HEXADECIMAL:
+                    if (!isHexadecimalDigit(ch)) {
+                        return false;
+                    }
+                    break;
+                    
+                case BINARY:
+                    if (!isBinaryDigit(ch)) {
+                        return false;
+                    }
+                    break;
+                    
+                case OCTAL:
+                    if (!isOctalDigit(ch)) {
+                        return false;
+                    }
+                    break;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool isBrace(token_t * token) {
+    int             i;
+
+    for (i = 0;i < strlen(pszBraces);i++) {
+        if (token->pszToken[0] == pszBraces[i]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool isOperator(token_t * token) {
+    return 
+        (isOperatorPlus(token)      || 
+        isOperatorMinus(token)      || 
+        isOperatorMultiply(token)   || 
+        isOperatorDivide(token)     || 
+        isOperatorMod(token)        || 
+        isOperatorPower(token)      || 
+        isOperatorAND(token)        || 
+        isOperatorOR(token)         || 
+        isOperatorXOR(token));
+}
+
+bool isConstant(token_t * token) {
+    return (isConstantPi(token) || isConstantC(token));
+}
+
+bool isFunction(token_t * token) {
     return (
         isFunctionSine(token)       ||
         isFunctionCosine(token)     ||
@@ -233,6 +234,52 @@ static bool isFunction(token_t * token) {
         isFunctionNaturalLog(token) ||
         isFunctionFactorial(token)  ||
         isFunctionMemory(token));
+}
+
+associativity getOperatorAssociativity(token_t * t) {
+    if (isOperatorPlus(t) || 
+        isOperatorMinus(t) || 
+        isOperatorMultiply(t) || 
+        isOperatorDivide(t) || 
+        isOperatorAND(t) || 
+        isOperatorOR(t) || 
+        isOPeratorXOR(t))
+    {
+        return associativity_left;
+    }
+    else {
+        return associativity_right;
+    }
+}
+
+int getOperatorPrescedense(token_t * t) {
+    int             prescedence;
+
+    switch (t->type) {
+        case token_operator_plus:
+        case token_operator_minus:
+            prescedence = 2;
+            break;
+        
+        case token_operator_multiply:
+        case token_operator_divide:
+        case token_operator_mod:
+            prescedence = 3;
+            break;
+
+        case token_operator_power:
+        case token_operator_AND:
+        case token_operator_OR:
+        case token_operator_XOR:
+            prescedence = 4;
+            break;
+
+        default:
+            prescedence = 0;
+            break;
+    }
+
+    return prescedence;
 }
 
 static int _findNextTokenPos(tokenizer_t * t) {

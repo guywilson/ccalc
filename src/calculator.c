@@ -4,31 +4,42 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "tokenizer.h"
 #include "que.h"
 #include "stack.h"
 
-static void _convertToRPN(char * pszExpression, que_handle_t * q) {
+static void _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
     stack_handle_t          operatorStack;
+    tokenizer_t             tokenizer;
 
-    stackInit(&operator);
-    Stack<Token> operatorStack = new Stack<>();
+    stackInit(&operatorStack, 80);
 
-    CalcTokenizer tok = new CalcTokenizer(expression, this.sys.getBase());
+    tzrInit(&tokenizer, pszExpression, base);
 
-    while (tok.hasMoreTokens()) {
-        Token t = tok.nextToken();
+    while (tzrHasMoreTokens(&tokenizer)) {
+        token_t * t = tzrNextToken(&tokenizer);
 
         /*
         ** If the token is a number, then push it to the output queue.
         */
-        if (t.isOperand()) {
-            outputQueue.add(t);
+        if (isOperand(&tokenizer, t)) {
+            que_item_t item;
+
+            item.item = t;
+            item.itemLength = sizeof(token_t);
+
+            qPutItem(q, item);
         }
         /*
         ** If the token is a function token, then push it onto the stack.
         */
-        else if (t.isFunction()) {
-            operatorStack.push(t);
+        else if (isFunction(t)) {
+            stack_item_t item;
+
+            item.item = t;
+            item.itemLength = sizeof(token_t);
+
+            stackPush(&operatorStack, item);
         }
         /*
         ** If the token is an operator, o1, then:
@@ -40,29 +51,37 @@ static void _convertToRPN(char * pszExpression, que_handle_t * q) {
         **	pop o2 off the operator stack, onto the output queue;
         **	at the end of iteration push o1 onto the operator stack.
         */
-        else if (t.isOperator()) {
-            Operator o1 = (Operator)t;
+        else if (isOperator(t)) {
+            while (!stackGetNumItems(&operatorStack)) {
+                token_t topToken;
+                
+                stackPeek(&operatorStack, &topToken);
 
-            while (!operatorStack.empty()) {
-                Token topToken = operatorStack.peek();
-
-                if (!topToken.isOperator()) {
+                if (!isOperator(&topToken)) {
                     break;
-                }
-
-                Operator o2 = (Operator)topToken;
-
-                if ((o1.getAssociativity() == Associativity.Left && o1.getPrecedence() <= o2.getPrecedence()) ||
-                    (o1.getAssociativity() == Associativity.Right && o1.getPrecedence() < o2.getPrecedence()))
-                {
-                    o2 = (Operator)operatorStack.pop();
-                    outputQueue.add(o2);
                 }
                 else {
-                    break;
+                    if ((getOperatorAssociativity(t) == associativity_left && getOperatorPrescedense(t) <= getOperatorPrescedense(&topToken)) ||
+                        (getOperatorAssociativity(t) == associativity_right && getOperatorPrescedense(t) < getOperatorPrescedense(&topToken)))
+                    {
+                        stack_item_t op2;
+
+                        stackPop(&operatorStack, &op2);
+
+                        que_item_t qi;
+
+                        qi.item = op2.item;
+                        qi.itemLength = op2.itemLength;
+
+                        qPutItem(q, qi);
+                    }
+                    else {
+                        break;
+                    }
                 }
             }
 
+            stackPush();
             operatorStack.push(o1);
         }
         else if (t.isBrace()) {
