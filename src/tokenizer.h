@@ -57,6 +57,8 @@ token_t;
 
 bool            isOperand(tokenizer_t * t, token_t * token);
 bool            isBrace(token_t * token);
+bool            isBraceLeft(token_t * token);
+bool            isBraceRight(token_t * token);
 bool            isOperator(token_t * token);
 bool            isConstant(token_t * token);
 bool            isFunction(token_t * token);

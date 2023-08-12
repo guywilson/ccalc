@@ -151,7 +151,6 @@ static bool isFunctionMemory(token_t * token) {
 bool isOperand(tokenizer_t * t, token_t * token) {
     int		i;
     char    ch;
-    bool	ret = true;
 
     if (token->pszToken[0] == '-' && token->length == 1) {
         // Must be the '-' operator...
@@ -204,6 +203,28 @@ bool isBrace(token_t * token) {
     return false;
 }
 
+bool isBraceLeft(token_t * token) {
+    if (token->pszToken[0] == '(' || 
+        token->pszToken[0] == '[' || 
+        token->pszToken[0] == '{')
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool isBraceRight(token_t * token) {
+    if (token->pszToken[0] == ')' || 
+        token->pszToken[0] == ']' || 
+        token->pszToken[0] == '}')
+    {
+        return true;
+    }
+
+    return false;
+}
+
 bool isOperator(token_t * token) {
     return 
         (isOperatorPlus(token)      || 
@@ -243,7 +264,7 @@ associativity getOperatorAssociativity(token_t * t) {
         isOperatorDivide(t) || 
         isOperatorAND(t) || 
         isOperatorOR(t) || 
-        isOPeratorXOR(t))
+        isOperatorXOR(t))
     {
         return associativity_left;
     }

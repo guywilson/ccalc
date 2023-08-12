@@ -5,10 +5,9 @@
 #include <stdbool.h>
 
 #include "tokenizer.h"
-#include "que.h"
-#include "stack.h"
+#include "list.h"
 
-static void _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
+static int _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
     stack_handle_t          operatorStack;
     tokenizer_t             tokenizer;
 
@@ -19,27 +18,22 @@ static void _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
     while (tzrHasMoreTokens(&tokenizer)) {
         token_t * t = tzrNextToken(&tokenizer);
 
+        list_item_t tokenItem;
+
+        tokenItem.item = t;
+        tokenItem.itemLength = sizeof(token_t);
+
         /*
         ** If the token is a number, then push it to the output queue.
         */
         if (isOperand(&tokenizer, t)) {
-            que_item_t item;
-
-            item.item = t;
-            item.itemLength = sizeof(token_t);
-
-            qPutItem(q, item);
+            qPutItem(q, tokenItem);
         }
         /*
         ** If the token is a function token, then push it onto the stack.
         */
         else if (isFunction(t)) {
-            stack_item_t item;
-
-            item.item = t;
-            item.itemLength = sizeof(token_t);
-
-            stackPush(&operatorStack, item);
+            stackPush(&operatorStack, tokenItem);
         }
         /*
         ** If the token is an operator, o1, then:
@@ -52,7 +46,7 @@ static void _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
         **	at the end of iteration push o1 onto the operator stack.
         */
         else if (isOperator(t)) {
-            while (!stackGetNumItems(&operatorStack)) {
+            while (stackGetNumItems(&operatorStack)) {
                 token_t topToken;
                 
                 stackPeek(&operatorStack, &topToken);
@@ -64,16 +58,10 @@ static void _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
                     if ((getOperatorAssociativity(t) == associativity_left && getOperatorPrescedense(t) <= getOperatorPrescedense(&topToken)) ||
                         (getOperatorAssociativity(t) == associativity_right && getOperatorPrescedense(t) < getOperatorPrescedense(&topToken)))
                     {
-                        stack_item_t op2;
+                        list_item_t op2;
 
                         stackPop(&operatorStack, &op2);
-
-                        que_item_t qi;
-
-                        qi.item = op2.item;
-                        qi.itemLength = op2.itemLength;
-
-                        qPutItem(q, qi);
+                        qPutItem(q, op2);
                     }
                     else {
                         break;
@@ -81,17 +69,14 @@ static void _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
                 }
             }
 
-            stackPush();
-            operatorStack.push(o1);
+            stackPush(&operatorStack, tokenItem);
         }
-        else if (t.isBrace()) {
-            Brace br = (Brace)t;
-
+        else if (isBrace(t)) {
             /*
             ** If the token is a left parenthesis (i.e. "("), then push it onto the stack.
             */
-            if (br.getType() == BraceType.Open) {
-                operatorStack.push(br);
+            if (isBraceLeft(t)) {
+                stackPush(&operatorStack, tokenItem);
             }
             else {
                 /*
@@ -104,21 +89,18 @@ static void _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
                     If the stack runs out without finding a left parenthesis, then there
                     are mismatched parentheses.
                 */
-                boolean foundLeftParenthesis = false;
+                bool foundLeftParenthesis = false;
 
-                while (!operatorStack.empty()) {
-                    Token stackToken = operatorStack.pop();
+                while (stackGetNumItems(&operatorStack)) {
+                    list_item_t stackToken;
 
-                    if (stackToken.isBrace()) {
-                        Brace brace = (Brace)stackToken;
+                    stackPop(&operatorStack, &stackToken);
 
-                        if (brace.getType() == BraceType.Open) {
-                            foundLeftParenthesis = true;
-                            break;
-                        }
+                    if (isBraceLeft((token_t *)stackToken.item)) {
+                        foundLeftParenthesis = true;
                     }
                     else {
-                        outputQueue.add(stackToken);
+                        qPutItem(q, stackToken);
                     }
                 }
 
@@ -126,29 +108,31 @@ static void _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
                     /*
                     ** If we've got here, we must have unmatched parenthesis...
                     */
-                    throw new Exception("Failed to find left parenthesis on operator stack");
+                    return -1;
                 }
             }
         }
     }
 
     /*
-    While there are still operator tokens in the stack:
+        While there are still operator tokens in the stack:
         If the operator token on the top of the stack is a parenthesis,
         then there are mismatched parentheses.
         Pop the operator onto the output queue.
     */
-    while (!operatorStack.empty()) {
-        Token stackToken = operatorStack.pop();
+    while (stackGetNumItems(&operatorStack)) {
+        list_item_t stackToken;
 
-        if (stackToken.isBrace()) {
+        stackPop(&operatorStack, &stackToken);
+
+        if (isBrace((token_t *)stackToken.item)) {
             /*
             ** If we've got here, we must have unmatched parenthesis...
             */
-            throw new Exception("Found too many parenthesis on operator stack");
+           return -1;
         }
         else {
-            outputQueue.add(stackToken);
+            qPutItem(q, stackToken);
         }
     }
 }
