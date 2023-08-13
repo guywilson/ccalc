@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <gmp.h>
-#include <mpfr.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 

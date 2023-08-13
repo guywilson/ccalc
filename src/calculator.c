@@ -4,19 +4,21 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <gmp.h>
+#include <mpfr.h>
+
 #include "tokenizer.h"
 #include "list.h"
 
-static int _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
+#define LIST_SIZE                   128
+
+static int _convertToRPN(char * pszExpression, que_handle_t * q, tokenizer_t * tokenizer) {
     stack_handle_t          operatorStack;
-    tokenizer_t             tokenizer;
 
-    stackInit(&operatorStack, 80);
+    stackInit(&operatorStack, LIST_SIZE);
 
-    tzrInit(&tokenizer, pszExpression, base);
-
-    while (tzrHasMoreTokens(&tokenizer)) {
-        token_t * t = tzrNextToken(&tokenizer);
+    while (tzrHasMoreTokens(tokenizer)) {
+        token_t * t = tzrNextToken(tokenizer);
 
         list_item_t tokenItem;
 
@@ -26,7 +28,7 @@ static int _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
         /*
         ** If the token is a number, then push it to the output queue.
         */
-        if (isOperand(&tokenizer, t)) {
+        if (isOperand(tokenizer, t)) {
             qPutItem(q, tokenItem);
         }
         /*
@@ -108,6 +110,7 @@ static int _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
                     /*
                     ** If we've got here, we must have unmatched parenthesis...
                     */
+                    stackDestroy(&operatorStack);
                     return -1;
                 }
             }
@@ -129,10 +132,93 @@ static int _convertToRPN(char * pszExpression, que_handle_t * q, int base) {
             /*
             ** If we've got here, we must have unmatched parenthesis...
             */
-           return -1;
+            stackDestroy(&operatorStack);
+            return -1;
         }
         else {
             qPutItem(q, stackToken);
         }
     }
+
+    stackDestroy(&operatorStack);
+
+    return 0;
+}
+
+static int evaluateOperation(token_t * operation, token_t * operand1, token_t * operand2) {
+    return 0;
+}
+
+static int evaluateFunction(token_t * function, token_t * operand) {
+    return 0;
+}
+
+int evaluate(char * pszExpression, mpfr_t * result, int base) {
+    tokenizer_t             tokenizer;
+    que_handle_t            outputQueue;
+    stack_handle_t          stack;
+
+    qInit(&outputQueue, LIST_SIZE);
+    stackInit(&stack, LIST_SIZE);
+
+    tzrInit(&tokenizer, pszExpression, base);
+
+    /*
+    ** Convert the calculation in infix notation to the postfix notation
+    ** (Reverse Polish Notation) using the 'shunting yard algorithm'...
+    */
+    _convertToRPN(pszExpression, &outputQueue, &tokenizer);
+
+    while (qGetNumItems(&outputQueue)) {
+        list_item_t queueItem;
+        token_t *   t = queueItem.item;
+
+        qGetItem(&outputQueue, &queueItem);
+
+        if (isOperand(&tokenizer, t)) {
+            stackPush(&stack, queueItem);
+        }
+        /*
+        ** Must be Operator or Function...
+        */
+        else {
+            if (isOperator(t)) {
+                list_item_t o1;
+                list_item_t o2;
+
+                stackPop(&stack, &o2);
+                stackPop(&stack, &o1);
+
+                evaluateOperation(t, (token_t *)o1.item, (token_t *)o2.item);
+
+                // stackPush(&stack, &result);
+            }
+            else {
+                list_item_t o1;
+
+                stackPop(&stack, &o1);
+
+                evaluateFunction(t, (token_t *)o1.item);
+
+                // stackPush(&stack, &result);
+            }
+        }
+    }
+
+    /*
+    ** If there is one and only one item left on the stack,
+    ** it is the result of the calculation. Otherwise, we
+    ** have too many tokens and therefore an error...
+    */
+    if (stackGetNumItems(&stack) == 1) {
+        //stackPop(&stack, &result);
+    }
+    else {
+        tzrFinish(&tokenizer);
+        return -1;
+    }
+
+    tzrFinish(&tokenizer);
+    
+    return 0;
 }
