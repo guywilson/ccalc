@@ -7,7 +7,26 @@
 
 #include "tokenizer.h"
 
+#define CONSTANT_C                      "299792458"
+#define CONSTANT_PI                     "3.1415926535897932384626433832795028841971693993751058209749445923"
+
 static const char * pszBraces = "({[]})";
+
+static char * trim(char * src) {
+    int         i;
+    int         len = strlen(src);
+
+    for (i = 0;i < len;i++) {
+        if (i > 0) {
+            if (isspace(src[i])) {
+                src[i] = 0;
+                break;
+            }
+        }
+    }
+
+    return src;
+}
 
 static bool isdelim(char ch) {
     int                     i;
@@ -427,7 +446,8 @@ token_t * tzrNextToken(tokenizer_t * t) {
 
     token->length = (t->endIndex - t->startIndex) + 1;
 
-    token->pszToken = strndup(&t->pszExpression[t->startIndex], token->length);
+    token->pszToken = trim(strndup(&t->pszExpression[t->startIndex], token->length));
+    token->length = strlen(token->pszToken);
 
     t->startIndex = t->endIndex;
 
@@ -462,7 +482,20 @@ token_t * tzrNextToken(tokenizer_t * t) {
         token->type = token_operator_XOR;
     }
     else if (isConstant(token)) {
-        token->type = token_constant;
+        if (isConstantC(token)) {
+            free(token->pszToken);
+
+            token->type = token_operand;
+            token->pszToken = strdup(CONSTANT_C);
+            token->length = strlen(token->pszToken);
+        }
+        else if (isConstantPi(token)) {
+            free(token->pszToken);
+
+            token->type = token_operand;
+            token->pszToken = strdup(CONSTANT_PI);
+            token->length = strlen(token->pszToken);
+        }
     }
     else if (isFunction(token)) {
         token->type = token_function;
