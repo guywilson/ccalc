@@ -30,12 +30,29 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "calculator.h"
 #include "utils.h"
 
-void printUsage(void) {
+static void printUsage(void) {
 
+}
+
+static const char * getBaseString(void) {
+    switch (getBase()) {
+        case DECIMAL:
+            return "DEC";
+
+        case HEXADECIMAL:
+            return "HEX";
+
+        case OCTAL:
+            return "OCT";
+
+        case BINARY:
+            return "BIN";
+    }
 }
 
 int main(int argc, char ** argv) {
     char *              pszCalculation;
+    char                szPrompt[16];
     bool                loop = true;
     token_t             result;
 
@@ -48,8 +65,10 @@ int main(int argc, char ** argv) {
     setBase(DECIMAL);
 
     while (loop) {
+        sprintf(szPrompt, "calc [%s]> ", getBaseString());
+
         // Display prompt and read input
-        pszCalculation = readline("calc> ");
+        pszCalculation = readline(szPrompt);
 
         // Add input to readline history.
         add_history(pszCalculation);

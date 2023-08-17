@@ -21,6 +21,8 @@ static int                          queueHead = 0;
 static int                          queueTail = 0;
 static int                          queueSize = 0;
 
+const mpfr_prec_t                   basePrecision = 128L;
+
 static void stackInit(void) {
     stackPointer = 0;
 
@@ -39,7 +41,7 @@ static token_t * stackPop(void) {
 }
 
 static token_t * stackPeek(void) {
-    return &tokenStack[stackPointer];
+    return &tokenStack[stackPointer - 1];
 }
 
 static void queueInit(void) {
@@ -144,10 +146,12 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                 */
                 bool foundLeftParenthesis = false;
 
-                while (stackPointer > 0) {
+                while (stackPointer > 0 && !foundLeftParenthesis) {
                     token_t * stackToken;
 
                     stackToken = stackPop();
+
+                    printf("Looking for '(', popped '%s' off the stack\n", stackToken->pszToken);
 
                     if (isBraceLeft(stackToken)) {
                         foundLeftParenthesis = true;
@@ -209,49 +213,44 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
     mpfr_t          o1;
     mpfr_t          o2;
     mpfr_t          r;
-    mpfr_exp_t      exponent;
     char            pszResult[80];
     char            szFormatStr[32];
 
     printf("Got operand: '%s'\n", operand1->pszToken);
     printf("Got operand: '%s'\n", operand2->pszToken);
 
-    mpfr_init2(o1, getPrecision());
-    mpfr_strtofr(o1, operand1->pszToken, NULL, getBase(), MPFR_RNDN);
+    mpfr_init2(o1, basePrecision);
+    mpfr_strtofr(o1, operand1->pszToken, NULL, getBase(), MPFR_RNDA);
 
-    mpfr_init2(o2, getPrecision());
-    mpfr_strtofr(o2, operand2->pszToken, NULL, getBase(), MPFR_RNDN);
+    mpfr_init2(o2, basePrecision);
+    mpfr_strtofr(o2, operand2->pszToken, NULL, getBase(), MPFR_RNDA);
 
-    mpfr_init2(r, getPrecision());
+    mpfr_init2(r, basePrecision);
 
     switch (operation->type) {
         case token_operator_plus:
-            mpfr_add(r, o1, o2, MPFR_RNDN);
+            mpfr_add(r, o1, o2, MPFR_RNDA);
             break;
 
         case token_operator_minus:
-            mpfr_sub(r, o1, o2, MPFR_RNDN);
+            mpfr_sub(r, o1, o2, MPFR_RNDA);
             break;
 
         case token_operator_multiply:
-            mpfr_mul(r, o1, o2, MPFR_RNDN);
+            mpfr_mul(r, o1, o2, MPFR_RNDA);
             break;
 
         case token_operator_divide:
-            printf("Got operator: divide\n");
-            mpfr_div(r, o1, o2, MPFR_RNDN);
-            printf("Done division\n");
+            mpfr_div(r, o1, o2, MPFR_RNDA);
             break;
 
         case token_operator_mod:
-            mpfr_remainder(r, o1, o2, MPFR_RNDN);
+            mpfr_remainder(r, o1, o2, MPFR_RNDA);
             break;
 
         default:
             return -1;
     }
-
-//    mpfr_get_str(pszResult, &exponent, getBase(), (size_t)getPrecision(), r, MPFR_RNDN);
 
     sprintf(szFormatStr, "%%.%ldRf", (long)getPrecision());
 
