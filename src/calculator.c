@@ -111,8 +111,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                     break;
                 }
                 else {
-                    if ((getOperatorAssociativity(t) == associativity_left && getOperatorPrescedense(t) <= getOperatorPrescedense(topToken)) ||
-                        (getOperatorAssociativity(t) == associativity_right && getOperatorPrescedense(t) < getOperatorPrescedense(topToken)))
+                    if ((getOperatorAssociativity(t) == associativity_left && getOperatorPrecedence(t) <= getOperatorPrecedence(topToken)) ||
+                        (getOperatorAssociativity(t) == associativity_right && getOperatorPrecedence(t) < getOperatorPrecedence(topToken)))
                     {
                         token_t * op2;
 
@@ -401,8 +401,16 @@ int evaluate(char * pszExpression, token_t * result) {
         /*
         ** Must be Operator or Function...
         */
-        else {
-            if (isOperator(t)) {
+        else if (isFunction(t)) {
+                token_t *       o1;
+
+                o1 = stackPop();
+
+                token_t result;
+
+                evaluateFunction(&result, t, o1);
+        }
+        else if (isOperator(t)) {
                 token_t *       o1;
                 token_t *       o2;
 
@@ -412,16 +420,6 @@ int evaluate(char * pszExpression, token_t * result) {
                 token_t result;
 
                 evaluateOperation(&result, t, o1, o2);
-            }
-            else {
-                token_t *       o1;
-
-                o1 = stackPop();
-
-                token_t result;
-
-                evaluateFunction(&result, t, o1);
-            }
         }
     }
 

@@ -277,49 +277,55 @@ bool isFunction(token_t * token) {
 }
 
 associativity getOperatorAssociativity(token_t * t) {
-    if (isOperatorPlus(t) || 
-        isOperatorMinus(t) || 
-        isOperatorMultiply(t) || 
-        isOperatorDivide(t) || 
-        isOperatorAND(t) || 
-        isOperatorOR(t) || 
-        isOperatorXOR(t))
-    {
-        return associativity_left;
+    if (isOperator(t)) {
+        if (isOperatorPower(t)) {
+            return associativity_right;
+        }
+        else {
+            return associativity_left;
+        }
     }
     else {
-        return associativity_right;
+        return associativity_left;
     }
 }
 
-int getOperatorPrescedense(token_t * t) {
-    int             prescedence;
+int getOperatorPrecedence(token_t * t) {
+    int             precedence;
 
-    switch (t->type) {
-        case token_operator_plus:
-        case token_operator_minus:
-            prescedence = 2;
-            break;
-        
-        case token_operator_multiply:
-        case token_operator_divide:
-        case token_operator_mod:
-            prescedence = 3;
-            break;
+    if (isOperator(t)) {
+        switch (t->type) {
+            case token_operator_plus:
+            case token_operator_minus:
+                precedence = 2;
+                break;
+            
+            case token_operator_multiply:
+            case token_operator_divide:
+            case token_operator_mod:
+                precedence = 3;
+                break;
 
-        case token_operator_power:
-        case token_operator_AND:
-        case token_operator_OR:
-        case token_operator_XOR:
-            prescedence = 4;
-            break;
+            case token_operator_power:
+            case token_operator_AND:
+            case token_operator_OR:
+            case token_operator_XOR:
+                precedence = 4;
+                break;
 
-        default:
-            prescedence = 0;
-            break;
+            default:
+                precedence = 0;
+                break;
+        }
+    }
+    else if (isFunction(t)) {
+        precedence = 5;
+    }
+    else {
+        precedence = 0;
     }
 
-    return prescedence;
+    return precedence;
 }
 
 static int _findNextTokenPos(tokenizer_t * t) {
