@@ -444,7 +444,7 @@ token_t * tzrNextToken(tokenizer_t * t) {
         return NULL;
     }
 
-    token->length = (t->endIndex - t->startIndex) + 1;
+    token->length = (t->endIndex - t->startIndex);
 
     token->pszToken = trim(strndup(&t->pszExpression[t->startIndex], token->length));
     token->length = strlen(token->pszToken);
