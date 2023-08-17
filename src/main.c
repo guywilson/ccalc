@@ -30,6 +30,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "calculator.h"
 #include "utils.h"
 
+#define DEFAULT_PRECISION                       12
+
 const char * pszWarranty = 
     "CCALC (Command-line CALCulator)\n\n" \
     "Copyright (C) 2023  Guy Wilson\n" \
@@ -106,7 +108,7 @@ int main(int argc, char ** argv) {
     // Enable history
     using_history();
 
-    setPrecision(8);
+    setPrecision(DEFAULT_PRECISION);
     setBase(DECIMAL);
 
     result.type = token_operand;
