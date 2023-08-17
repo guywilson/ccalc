@@ -119,7 +119,11 @@ static bool isConstantPi(token_t * token) {
 }
 
 static bool isConstantC(token_t * token) {
-    return (token->pszToken[0] == 'c' || token->pszToken[0] == 'C');
+    if (strncmp(token->pszToken, "c", 2) == 0) {
+        return true;
+    }
+
+    return false;
 }
 
 static bool isFunctionSine(token_t * token) {

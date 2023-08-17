@@ -107,7 +107,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
     
                 topToken = stackPeek();
 
-                if (!isOperator(topToken)) {
+                if (!isOperator(topToken) && !isFunction(topToken)) {
                     break;
                 }
                 else {
