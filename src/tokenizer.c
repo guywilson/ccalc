@@ -498,7 +498,39 @@ token_t * tzrNextToken(tokenizer_t * t) {
         }
     }
     else if (isFunction(token)) {
-        token->type = token_function;
+        if (isFunctionSine(token)) {
+            token->type = token_function_sin;
+        }
+        else if (isFunctionCosine(token)) {
+            token->type = token_function_cos;
+        }
+        else if (isFunctionTangent(token)) {
+            token->type = token_function_tan;
+        }
+        else if (isFunctionArcSine(token)) {
+            token->type = token_function_asin;
+        }
+        else if (isFunctionArcCosine(token)) {
+            token->type = token_function_acos;
+        }
+        else if (isFunctionArcTangent(token)) {
+            token->type = token_function_atan;
+        }
+        else if (isFunctionSquareRoot(token)) {
+            token->type = token_function_sqrt;
+        }
+        else if (isFunctionLogarithm(token)) {
+            token->type = token_function_log;
+        }
+        else if (isFunctionNaturalLog(token)) {
+            token->type = token_function_ln;
+        }
+        else if (isFunctionFactorial(token)) {
+            token->type = token_function_fac;
+        }
+        else if (isFunctionMemory(token)) {
+            token->type = token_function_mem;
+        }
     }
     else if (isBrace(token)) {
         token->type = token_brace;

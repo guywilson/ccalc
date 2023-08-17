@@ -64,6 +64,10 @@ int main(int argc, char ** argv) {
     setPrecision(8);
     setBase(DECIMAL);
 
+    result.type = token_operand;
+    result.pszToken = "0";
+    result.length = 1;
+    
     while (loop) {
         sprintf(szPrompt, "calc [%s]> ", getBaseString());
 
@@ -79,6 +83,9 @@ int main(int argc, char ** argv) {
         }
         else if (strncmp(pszCalculation, "setp", 4) == 0) {
             setPrecision(strtol(&pszCalculation[4], NULL, BASE_10));
+        }
+        else if (strncmp(pszCalculation, "memst", 5) == 0) {
+            memoryStore(&result, atoi(&pszCalculation[5]));
         }
         else if (strncmp(pszCalculation, "dec", 3) == 0) {
             setBase(DECIMAL);

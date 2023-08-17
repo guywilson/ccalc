@@ -3,6 +3,8 @@
 #ifndef __INCL_CALCULATOR
 #define __INCL_CALCULATOR
 
-int evaluate(char * pszExpression, token_t * result);
+int         memoryStore(token_t * t, int memoryLocation);
+token_t *   memoryFetch(int memoryLocation);
+int         evaluate(char * pszExpression, token_t * result);
 
 #endif

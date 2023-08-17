@@ -9,6 +9,7 @@
 
 #include "tokenizer.h"
 #include "utils.h"
+#include "calculator.h"
 
 #define LIST_SIZE                   128
 #define STACK_SIZE                   64
@@ -20,6 +21,8 @@ static int                          stackPointer = 0;
 static int                          queueHead = 0;
 static int                          queueTail = 0;
 static int                          queueSize = 0;
+
+static token_t                      memory[10];
 
 const mpfr_prec_t                   basePrecision = 128L;
 
@@ -265,7 +268,103 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
 }
 
 static int evaluateFunction(token_t * result, token_t * function, token_t * operand) {
+    mpfr_t          o1;
+    mpfr_t          r;
+    char            pszResult[80];
+    char            szFormatStr[32];
+
+    printf("Got operand: '%s'\n", operand->pszToken);
+
+    mpfr_init2(o1, basePrecision);
+    mpfr_strtofr(o1, operand->pszToken, NULL, getBase(), MPFR_RNDA);
+
+    mpfr_init2(r, basePrecision);
+
+    switch (function->type) {
+        case token_function_sin:
+            mpfr_sinu(r, o1, 360U, MPFR_RNDA);
+            break;
+
+        case token_function_cos:
+            mpfr_cosu(r, o1, 360U, MPFR_RNDA);
+            break;
+
+        case token_function_tan:
+            mpfr_tanu(r, o1, 360U, MPFR_RNDA);
+            break;
+
+        case token_function_asin:
+            mpfr_asinu(r, o1, 360U, MPFR_RNDA);
+            break;
+
+        case token_function_acos:
+            mpfr_acosu(r, o1, 360U, MPFR_RNDA);
+            break;
+
+        case token_function_atan:
+            mpfr_atanu(r, o1, 360U, MPFR_RNDA);
+            break;
+
+        case token_function_sqrt:
+            mpfr_sqrt(r, o1, MPFR_RNDA);
+            break;
+
+        case token_function_log:
+            mpfr_log10(r, o1, MPFR_RNDA);
+            break;
+
+        case token_function_ln:
+            mpfr_log(r, o1, MPFR_RNDA);
+            break;
+
+        case token_function_fac:
+            mpfr_fac_ui(r, mpfr_get_si(o1, MPFR_RNDA), MPFR_RNDA);
+            break;
+
+        case token_function_mem:
+            mpfr_strtofr(
+                    r, 
+                    memoryFetch((int)mpfr_get_si(o1, MPFR_RNDA))->pszToken, 
+                    NULL, 
+                    getBase(), 
+                    MPFR_RNDA);
+            break;
+
+        default:
+            return -1;
+    }
+
+    sprintf(szFormatStr, "%%.%ldRf", (long)getPrecision());
+
+    mpfr_sprintf(pszResult, szFormatStr, r);
+    result->pszToken = pszResult;
+    result->length = strlen(pszResult);
+    result->type = token_operand;
+
+    stackPush(result);
+
     return 0;
+}
+
+int memoryStore(token_t * t, int memoryLocation) {
+    if (memoryLocation < 0 || memoryLocation > 9) {
+        return -1;
+    }
+
+    memory[memoryLocation].pszToken = strndup(t->pszToken, t->length);
+
+    memory[memoryLocation].length = t->length;
+    memory[memoryLocation].type = token_operand;
+
+    return 0;
+}
+
+token_t * memoryFetch(int memoryLocation) {
+    if (memoryLocation < 0 || memoryLocation > 9) {
+        return NULL;
+    }
+
+    return &memory[memoryLocation];
 }
 
 int evaluate(char * pszExpression, token_t * result) {
