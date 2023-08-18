@@ -3,7 +3,11 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#ifndef __APPLE__
+#include <cctype.h>
+#else
 #include <ctype.h>
+#endif
 
 #include "tokenizer.h"
 
