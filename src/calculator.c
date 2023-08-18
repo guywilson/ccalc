@@ -7,6 +7,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 
+#include "logger.h"
 #include "tokenizer.h"
 #include "utils.h"
 #include "calculator.h"
@@ -79,14 +80,14 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         ** If the token is a number, then push it to the output queue.
         */
         if (isOperand(tokenizer, t)) {
-//            printf("Got operand '%s'\n", t->pszToken);
+            lgLogDebug("Got operand '%s'", t->pszToken);
             queuePut(t);
         }
         /*
         ** If the token is a function token, then push it onto the stack.
         */
         else if (isFunction(t)) {
-//            printf("Got function '%s'\n", t->pszToken);
+            lgLogDebug("Got function '%s'", t->pszToken);
             stackPush(t);
         }
         /*
@@ -100,7 +101,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         **	at the end of iteration push o1 onto the operator stack.
         */
         else if (isOperator(t)) {
-//            printf("Got operator '%s'\n", t->pszToken);
+            lgLogDebug("Got operator '%s'", t->pszToken);
 
             while (stackPointer > 0) {
                 token_t *       topToken;
@@ -128,7 +129,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
             stackPush(t);
         }
         else if (isBrace(t)) {
-//            printf("Got brace '%s'\n", t->pszToken);
+            lgLogDebug("Got brace '%s'", t->pszToken);
 
             /*
             ** If the token is a left parenthesis (i.e. "("), then push it onto the stack.
@@ -154,8 +155,6 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
 
                     stackToken = stackPop();
 
-//                    printf("Looking for '(', popped '%s' off the stack\n", stackToken->pszToken);
-
                     if (isBraceLeft(stackToken)) {
                         foundLeftParenthesis = true;
                     }
@@ -174,7 +173,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         }
     }
 
-//    printf("Num items in stack %d\n", stackPointer);
+    lgLogDebug("Num items in stack %d", stackPointer);
 
     /*
         While there are still operator tokens in the stack:
@@ -187,13 +186,11 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
 
         stackToken = stackPop();
 
-//        printf("Popped item off stack\n");
-
         if (stackToken != NULL) {
-//            printf("stackPop '%s'\n", stackToken->pszToken);
+            lgLogDebug("stackPop '%s'", stackToken->pszToken);
         }
         else {
-            printf("NULL item on stack\n");
+            lgLogError("NULL item on stack");
             return -1;
         }
 
@@ -204,7 +201,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
             return -1;
         }
         else {
-//            printf("qPutItem '%s'\n", stackToken->pszToken);
+            lgLogDebug("qPutItem '%s'", stackToken->pszToken);
             queuePut(stackToken);
         }
     }
@@ -220,9 +217,9 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
     char            pszResult[80];
     char            szFormatStr[32];
 
-    // printf("Got operation: '%s'\n", operation->pszToken);
-    // printf("Got operand 1: '%s'\n", operand1->pszToken);
-    // printf("Got operand 2: '%s'\n", operand2->pszToken);
+    lgLogInfo("Got operation: '%s'", operation->pszToken);
+    lgLogInfo("Got operand 1: '%s'", operand1->pszToken);
+    lgLogInfo("Got operand 2: '%s'", operand2->pszToken);
 
     mpfr_init2(o1, basePrecision);
     mpfr_strtofr(o1, operand1->pszToken, NULL, getBase(), MPFR_RNDA);
@@ -298,8 +295,8 @@ static int evaluateFunction(token_t * result, token_t * function, token_t * oper
     char            pszResult[80];
     char            szFormatStr[32];
 
-    // printf("Got function: '%s'\n", function->pszToken);
-    // printf("Got operand: '%s'\n", operand->pszToken);
+    lgLogInfo("Got function: '%s'", function->pszToken);
+    lgLogInfo("Got operand: '%s'", operand->pszToken);
 
     mpfr_init2(o1, basePrecision);
     mpfr_strtofr(o1, operand->pszToken, NULL, getBase(), MPFR_RNDA);
@@ -436,23 +433,21 @@ int evaluate(const char * pszExpression, token_t * result) {
     ** (Reverse Polish Notation) using the 'shunting yard algorithm'...
     */
     if (_convertToRPN(&tokenizer)) {
-        printf("Error converting to RPN\n");
+        lgLogError("Error converting to RPN");
         return -1;
     }
 
     stackInit();
 
-//    printf("num items in queue = %d\n", getQueueSize());
+    lgLogDebug("num items in queue = %d", getQueueSize());
 
     while (getQueueSize()) {
         token_t *       t;
 
         t = queueGet();
 
-//        printf("\nGot q item '%s'\n", t->pszToken);
-
         if (isOperand(&tokenizer, t)) {
-//            printf("Got operand: '%s'\n", t->pszToken);
+            lgLogDebug("Got operand: '%s'", t->pszToken);
             stackPush(t);
         }
         /*

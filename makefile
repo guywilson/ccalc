@@ -29,15 +29,15 @@ POSTCOMPILE = @ mv -f $(DEP)/$*.Td $(DEP)/$*.d
 
 CFLAGS = -c -O2 -Wall -pedantic -g
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP)/$*.Td
-INCLUDEFLAGS = -I /usr/local/MacGPG2/include -I /opt/homebrew/include
-LIBFLAGS = -L /opt/homebrew/lib
+INCLUDEFLAGS = -I /usr/local/MacGPG2/include -I /opt/homebrew/include -I ${HOME}/Library/include
+LIBFLAGS = -L /opt/homebrew/lib -L ${HOME}/Library/lib
 
 # Libraries
-STDLIBS =
+STDLIBS = -lstrutils
 EXTLIBS = -lreadline -lgmp -lmpfr
 
 COMPILE.c = $(C) $(CFLAGS) $(DEPFLAGS) $(INCLUDEFLAGS) -o $@
-LINK.o = $(LINKER) $(STDLIBS) $(LIBFLAGS) -o $@
+LINK.o = $(LINKER) $(LIBFLAGS) $(STDLIBS) -o $@
 
 CSRCFILES = $(wildcard $(SOURCE)/*.c)
 OBJFILES = $(patsubst $(SOURCE)/%.c, $(BUILD)/%.o, $(CSRCFILES))

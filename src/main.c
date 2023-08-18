@@ -26,10 +26,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "logger.h"
 #include "tokenizer.h"
 #include "calculator.h"
 #include "utils.h"
 #include "test.h"
+
+#define LOG_LEVEL "LOG_LEVEL_FATAL | LOG_LEVEL_ERROR | LOG_LEVEL_STATUS"
 
 #define DEFAULT_PRECISION                       12
 
@@ -124,12 +127,13 @@ int main(int argc, char ** argv) {
 
     rl_bind_key('\t', rl_complete);
 
-    // Enable history
     using_history();
 
     setPrecision(DEFAULT_PRECISION);
     setBase(DECIMAL);
     setTrigMode(degrees);
+
+    lgOpenStdout(LOG_LEVEL);
 
     result.type = token_operand;
     result.pszToken = "0";
@@ -140,10 +144,8 @@ int main(int argc, char ** argv) {
     while (loop) {
         sprintf(szPrompt, "calc [%s][%s]> ", getBaseString(), getTrigModeString());
 
-        // Display prompt and read input
         pszCalculation = readline(szPrompt);
 
-        // Add input to readline history.
         add_history(pszCalculation);
 
         if (strlen(pszCalculation) > 0) {
@@ -163,7 +165,7 @@ int main(int argc, char ** argv) {
                 int m = atoi(&pszCalculation[5]);
 
                 if (memoryStore(&result, m) < 0) {
-                    printf("Invalid memory location '%d' must be between 0 & 9\n", m);
+                    fprintf(stderr, "Invalid memory location '%d' must be between 0 & 9\n", m);
                 }
             }
             else if (strncmp(pszCalculation, "dec", 3) == 0) {
@@ -188,12 +190,15 @@ int main(int argc, char ** argv) {
                 setTrigMode(radians);
             }
             else {
-                evaluate(pszCalculation, &result);
-                printf("%s = %s\n", pszCalculation, result.pszToken);
+                if (evaluate(pszCalculation, &result) == 0) {
+                    printf("%s = %s\n", pszCalculation, result.pszToken);
+                }
+                else {
+                    fprintf(stderr, "Evaluate failed for calc '%s'\n", pszCalculation);
+                }
             }
         }
 
-        // Free buffer that was allocated by readline
         free(pszCalculation);
     }
 }
