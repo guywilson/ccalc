@@ -3,11 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-#ifndef __APPLE__
-#include <cctype.h>
-#else
 #include <ctype.h>
-#endif
 
 #include "tokenizer.h"
 
@@ -50,7 +46,11 @@ static bool isDecimalDigit(char ch) {
 }
 
 static bool isHexadecimalDigit(char ch) {
+#ifdef __APPLE__
     return (ishexnumber(ch));
+#else
+    return (isxdigit(ch));
+#endif
 }
 
 static bool isOctalDigit(char ch) {
