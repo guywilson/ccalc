@@ -216,6 +216,7 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
     mpfr_t          o1;
     mpfr_t          o2;
     mpfr_t          r;
+    mpz_t           integer_r;
     char            pszResult[80];
     char            szFormatStr[32];
 
@@ -272,9 +273,16 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
             return -1;
     }
 
-    sprintf(szFormatStr, "%%.%ldRf", (long)getPrecision());
+    if (getBase() == DECIMAL) {
+        sprintf(szFormatStr, "%%.%ldRf", (long)getPrecision());
+        mpfr_sprintf(pszResult, szFormatStr, r);
+    }
+    else {
+        mpz_init(integer_r);
+        mpfr_get_z(integer_r, r, MPFR_RNDA);
+        sprintf(pszResult, "%s", mpz_get_str(NULL, getBase(), integer_r));
+    }
 
-    mpfr_sprintf(pszResult, szFormatStr, r);
     result->pszToken = pszResult;
     result->length = strlen(pszResult);
     result->type = token_operand;
