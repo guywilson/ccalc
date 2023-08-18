@@ -58,6 +58,7 @@ int test(void) {
 
     setPrecision(2U);
     setBase(DECIMAL);
+    setTrigMode(degrees);
     testEvaluate("pi + sin(45 + 45)", "4.14") ? numTestsPassed++ : numTestsFailed++;
     totalTests++;
 
@@ -73,6 +74,7 @@ int test(void) {
 
     setPrecision(2U);
     setBase(DECIMAL);
+    setTrigMode(degrees);
     testEvaluate("84 * -15 + sin(47)", "-1259.27") ? numTestsPassed++ : numTestsFailed++;
     totalTests++;
 
@@ -83,6 +85,7 @@ int test(void) {
 
     setPrecision(2U);
     setBase(DECIMAL);
+    setTrigMode(degrees);
     testEvaluate("sin(90) * cos(45) * tan(180) + asin(1) + acos(0) + atan(25)", "267.71") ? numTestsPassed++ : numTestsFailed++;
     totalTests++;
 

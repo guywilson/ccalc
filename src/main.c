@@ -74,6 +74,8 @@ static void printUsage(void) {
     printf("\thex\tSwitch to hexadecimal mode\n");
     printf("\tbin\tSwitch to binary mode\n");
     printf("\toct\tSwitch to octal mode\n");
+    printf("\tdeg\tSwitch to degrees mode for trigometric functions\n");
+    printf("\trad\tSwitch to radians mode for trigometric functions\n");
     printf("\tsetpn\tSet the precision to n\n");
     printf("\thelp\tThis help text\n");
     printf("\ttest\tRun a self test of the calculator\n");
@@ -99,9 +101,24 @@ static const char * getBaseString(void) {
     }
 }
 
+static const char * getTrigModeString(void) {
+    if (getBase() == DECIMAL) {
+        switch (getTrigMode()) {
+            case radians:
+                return "RN";
+
+            case degrees:
+                return "DG";
+        }
+    }
+    else {
+        return "";
+    }
+}
+
 int main(int argc, char ** argv) {
     char *              pszCalculation;
-    char                szPrompt[16];
+    char                szPrompt[32];
     bool                loop = true;
     token_t             result;
 
@@ -112,6 +129,7 @@ int main(int argc, char ** argv) {
 
     setPrecision(DEFAULT_PRECISION);
     setBase(DECIMAL);
+    setTrigMode(degrees);
 
     result.type = token_operand;
     result.pszToken = "0";
@@ -120,7 +138,7 @@ int main(int argc, char ** argv) {
     printBanner();
 
     while (loop) {
-        sprintf(szPrompt, "calc [%s]> ", getBaseString());
+        sprintf(szPrompt, "calc [%s][%s]> ", getBaseString(), getTrigModeString());
 
         // Display prompt and read input
         pszCalculation = readline(szPrompt);
@@ -153,12 +171,21 @@ int main(int argc, char ** argv) {
             }
             else if (strncmp(pszCalculation, "hex", 3) == 0) {
                 setBase(HEXADECIMAL);
+                setTrigMode(degrees);
             }
             else if (strncmp(pszCalculation, "bin", 3) == 0) {
                 setBase(BINARY);
+                setTrigMode(degrees);
             }
             else if (strncmp(pszCalculation, "oct", 3) == 0) {
                 setBase(OCTAL);
+                setTrigMode(degrees);
+            }
+            else if (strncmp(pszCalculation, "deg", 3) == 0) {
+                setTrigMode(degrees);
+            }
+            else if (strncmp(pszCalculation, "rad", 3) == 0) {
+                setTrigMode(radians);
             }
             else {
                 evaluate(pszCalculation, &result);

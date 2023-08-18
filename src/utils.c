@@ -11,6 +11,7 @@
 
 static mpfr_prec_t  _precision;
 static int          _base;
+static trig_mode_t  _mode;
 
 void setBase(int b) {
     _base = b;
@@ -26,4 +27,12 @@ void setPrecision(mpfr_prec_t p) {
 
 mpfr_prec_t getPrecision(void) {
     return _precision;
+}
+
+void setTrigMode(trig_mode_t m) {
+    _mode = m;
+}
+
+trig_mode_t getTrigMode(void) {
+    return _mode;
 }

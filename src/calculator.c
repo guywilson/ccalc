@@ -308,27 +308,57 @@ static int evaluateFunction(token_t * result, token_t * function, token_t * oper
 
     switch (function->type) {
         case token_function_sin:
-            mpfr_sinu(r, o1, 360U, MPFR_RNDA);
+            if (getTrigMode() == degrees) {
+                mpfr_sinu(r, o1, 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_sin(r, o1, MPFR_RNDA);
+            }
             break;
 
         case token_function_cos:
-            mpfr_cosu(r, o1, 360U, MPFR_RNDA);
+            if (getTrigMode() == degrees) {
+                mpfr_cosu(r, o1, 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_cos(r, o1, MPFR_RNDA);
+            }
             break;
 
         case token_function_tan:
-            mpfr_tanu(r, o1, 360U, MPFR_RNDA);
+            if (getTrigMode() == degrees) {
+                mpfr_tanu(r, o1, 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_tan(r, o1, MPFR_RNDA);
+            }
             break;
 
         case token_function_asin:
-            mpfr_asinu(r, o1, 360U, MPFR_RNDA);
+            if (getTrigMode() == degrees) {
+                mpfr_asinu(r, o1, 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_asin(r, o1, MPFR_RNDA);
+            }
             break;
 
         case token_function_acos:
-            mpfr_acosu(r, o1, 360U, MPFR_RNDA);
+            if (getTrigMode() == degrees) {
+                mpfr_acosu(r, o1, 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_acos(r, o1, MPFR_RNDA);
+            }
             break;
 
         case token_function_atan:
-            mpfr_atanu(r, o1, 360U, MPFR_RNDA);
+            if (getTrigMode() == degrees) {
+                mpfr_atanu(r, o1, 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_atan(r, o1, MPFR_RNDA);
+            }
             break;
 
         case token_function_sqrt:
