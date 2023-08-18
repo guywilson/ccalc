@@ -220,9 +220,9 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
     char            pszResult[80];
     char            szFormatStr[32];
 
-    printf("Got operation: '%s'\n", operation->pszToken);
-    printf("Got operand 1: '%s'\n", operand1->pszToken);
-    printf("Got operand 2: '%s'\n", operand2->pszToken);
+    // printf("Got operation: '%s'\n", operation->pszToken);
+    // printf("Got operand 1: '%s'\n", operand1->pszToken);
+    // printf("Got operand 2: '%s'\n", operand2->pszToken);
 
     mpfr_init2(o1, basePrecision);
     mpfr_strtofr(o1, operand1->pszToken, NULL, getBase(), MPFR_RNDA);
@@ -298,8 +298,8 @@ static int evaluateFunction(token_t * result, token_t * function, token_t * oper
     char            pszResult[80];
     char            szFormatStr[32];
 
-    printf("Got function: '%s'\n", function->pszToken);
-    printf("Got operand: '%s'\n", operand->pszToken);
+    // printf("Got function: '%s'\n", function->pszToken);
+    // printf("Got operand: '%s'\n", operand->pszToken);
 
     mpfr_init2(o1, basePrecision);
     mpfr_strtofr(o1, operand->pszToken, NULL, getBase(), MPFR_RNDA);
@@ -412,7 +412,7 @@ int evaluate(const char * pszExpression, token_t * result) {
 
     stackInit();
 
-    printf("num items in queue = %d\n", getQueueSize());
+//    printf("num items in queue = %d\n", getQueueSize());
 
     while (getQueueSize()) {
         token_t *       t;
@@ -422,7 +422,7 @@ int evaluate(const char * pszExpression, token_t * result) {
 //        printf("\nGot q item '%s'\n", t->pszToken);
 
         if (isOperand(&tokenizer, t)) {
-            printf("Got operand: '%s'\n", t->pszToken);
+//            printf("Got operand: '%s'\n", t->pszToken);
             stackPush(t);
         }
         /*
