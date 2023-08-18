@@ -421,7 +421,7 @@ static int _findNextTokenPos(tokenizer_t * t) {
     return -1;
 }
 
-void tzrInit(tokenizer_t * t, char * pszExpression, int base) {
+void tzrInit(tokenizer_t * t, const char * pszExpression, int base) {
     t->pszExpression = strdup(pszExpression);
 
     t->startIndex = 0;

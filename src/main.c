@@ -29,6 +29,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "tokenizer.h"
 #include "calculator.h"
 #include "utils.h"
+#include "test.h"
 
 #define DEFAULT_PRECISION                       12
 
@@ -75,6 +76,7 @@ static void printUsage(void) {
     printf("\toct\tSwitch to octal mode\n");
     printf("\tsetpn\tSet the precision to n\n");
     printf("\thelp\tThis help text\n");
+    printf("\ttest\tRun a self test of the calculator\n");
     printf("\texit\tExit the calculator\n\n");
 }
 
@@ -132,6 +134,9 @@ int main(int argc, char ** argv) {
             }
             else if (strncmp(pszCalculation, "help", 4) == 0) {
                 printUsage();
+            }
+            else if (strncmp(pszCalculation, "test", 4) == 0) {
+                return test();
             }
             else if (strncmp(pszCalculation, "setp", 4) == 0) {
                 setPrecision(strtol(&pszCalculation[4], NULL, BASE_10));

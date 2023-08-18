@@ -74,7 +74,7 @@ bool            isConstant(token_t * token);
 bool            isFunction(token_t * token);
 associativity   getOperatorAssociativity(token_t * t);
 int             getOperatorPrecedence(token_t * t);
-void            tzrInit(tokenizer_t * t, char * pszExpression, int base);
+void            tzrInit(tokenizer_t * t, const char * pszExpression, int base);
 void            tzrFinish(tokenizer_t * t);
 bool            tzrHasMoreTokens(tokenizer_t * t);
 token_t *       tzrNextToken(tokenizer_t * t);

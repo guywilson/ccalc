@@ -5,6 +5,6 @@
 
 int         memoryStore(token_t * t, int memoryLocation);
 token_t *   memoryFetch(int memoryLocation);
-int         evaluate(char * pszExpression, token_t * result);
+int         evaluate(const char * pszExpression, token_t * result);
 
 #endif

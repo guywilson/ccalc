@@ -79,14 +79,14 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         ** If the token is a number, then push it to the output queue.
         */
         if (isOperand(tokenizer, t)) {
-            printf("Got operand '%s'\n", t->pszToken);
+//            printf("Got operand '%s'\n", t->pszToken);
             queuePut(t);
         }
         /*
         ** If the token is a function token, then push it onto the stack.
         */
         else if (isFunction(t)) {
-            printf("Got function '%s'\n", t->pszToken);
+//            printf("Got function '%s'\n", t->pszToken);
             stackPush(t);
         }
         /*
@@ -100,7 +100,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         **	at the end of iteration push o1 onto the operator stack.
         */
         else if (isOperator(t)) {
-            printf("Got operator '%s'\n", t->pszToken);
+//            printf("Got operator '%s'\n", t->pszToken);
 
             while (stackPointer > 0) {
                 token_t *       topToken;
@@ -128,7 +128,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
             stackPush(t);
         }
         else if (isBrace(t)) {
-            printf("Got brace '%s'\n", t->pszToken);
+//            printf("Got brace '%s'\n", t->pszToken);
 
             /*
             ** If the token is a left parenthesis (i.e. "("), then push it onto the stack.
@@ -154,7 +154,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
 
                     stackToken = stackPop();
 
-                    printf("Looking for '(', popped '%s' off the stack\n", stackToken->pszToken);
+//                    printf("Looking for '(', popped '%s' off the stack\n", stackToken->pszToken);
 
                     if (isBraceLeft(stackToken)) {
                         foundLeftParenthesis = true;
@@ -174,7 +174,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         }
     }
 
-    printf("Num items in stack %d\n", stackPointer);
+//    printf("Num items in stack %d\n", stackPointer);
 
     /*
         While there are still operator tokens in the stack:
@@ -187,10 +187,10 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
 
         stackToken = stackPop();
 
-        printf("Popped item off stack\n");
+//        printf("Popped item off stack\n");
 
         if (stackToken != NULL) {
-            printf("stackPop '%s'\n", stackToken->pszToken);
+//            printf("stackPop '%s'\n", stackToken->pszToken);
         }
         else {
             printf("NULL item on stack\n");
@@ -204,7 +204,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
             return -1;
         }
         else {
-            printf("qPutItem '%s'\n", stackToken->pszToken);
+//            printf("qPutItem '%s'\n", stackToken->pszToken);
             queuePut(stackToken);
         }
     }
@@ -219,8 +219,9 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
     char            pszResult[80];
     char            szFormatStr[32];
 
-    printf("Got operand: '%s'\n", operand1->pszToken);
-    printf("Got operand: '%s'\n", operand2->pszToken);
+    printf("Got operation: '%s'\n", operation->pszToken);
+    printf("Got operand 1: '%s'\n", operand1->pszToken);
+    printf("Got operand 2: '%s'\n", operand2->pszToken);
 
     mpfr_init2(o1, basePrecision);
     mpfr_strtofr(o1, operand1->pszToken, NULL, getBase(), MPFR_RNDA);
@@ -251,6 +252,22 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
             mpfr_remainder(r, o1, o2, MPFR_RNDA);
             break;
 
+        case token_operator_power:
+            mpfr_pow(r, o1, o2, MPFR_RNDA);
+            break;
+
+        case token_operator_AND:
+            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) & mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            break;
+
+        case token_operator_OR:
+            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) | mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            break;
+
+        case token_operator_XOR:
+            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) ^ mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            break;
+
         default:
             return -1;
     }
@@ -273,6 +290,7 @@ static int evaluateFunction(token_t * result, token_t * function, token_t * oper
     char            pszResult[80];
     char            szFormatStr[32];
 
+    printf("Got function: '%s'\n", function->pszToken);
     printf("Got operand: '%s'\n", operand->pszToken);
 
     mpfr_init2(o1, basePrecision);
@@ -367,7 +385,7 @@ token_t * memoryFetch(int memoryLocation) {
     return &memory[memoryLocation];
 }
 
-int evaluate(char * pszExpression, token_t * result) {
+int evaluate(const char * pszExpression, token_t * result) {
     tokenizer_t             tokenizer;
 
     tzrInit(&tokenizer, pszExpression, getBase());
@@ -393,9 +411,10 @@ int evaluate(char * pszExpression, token_t * result) {
 
         t = queueGet();
 
-        printf("\nGot q item '%s'\n", t->pszToken);
+//        printf("\nGot q item '%s'\n", t->pszToken);
 
         if (isOperand(&tokenizer, t)) {
+            printf("Got operand: '%s'\n", t->pszToken);
             stackPush(t);
         }
         /*
@@ -421,6 +440,8 @@ int evaluate(char * pszExpression, token_t * result) {
 
                 evaluateOperation(&result, t, o1, o2);
         }
+
+        free(t->pszToken);
     }
 
     /*
