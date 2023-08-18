@@ -170,10 +170,12 @@ int main(int argc, char ** argv) {
             }
             else if (strncmp(pszCalculation, "dec", 3) == 0) {
                 setBase(DECIMAL);
+                printf("= %s\n", result.pszToken);
             }
             else if (strncmp(pszCalculation, "hex", 3) == 0) {
                 setBase(HEXADECIMAL);
                 setTrigMode(degrees);
+                printf("= 0x%08X\n", (unsigned int)strtoul(result.pszToken, NULL, DECIMAL));
             }
             else if (strncmp(pszCalculation, "bin", 3) == 0) {
                 setBase(BINARY);
@@ -182,6 +184,7 @@ int main(int argc, char ** argv) {
             else if (strncmp(pszCalculation, "oct", 3) == 0) {
                 setBase(OCTAL);
                 setTrigMode(degrees);
+                printf("= 0o%o\n", (unsigned int)strtoul(result.pszToken, NULL, DECIMAL));
             }
             else if (strncmp(pszCalculation, "deg", 3) == 0) {
                 setTrigMode(degrees);
