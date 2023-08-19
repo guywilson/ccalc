@@ -15,7 +15,10 @@ static bool testEvaluate(const char * pszCalculation, const char * pszExpectedRe
     token_t         r;
     bool            success;
 
-    evaluate(pszCalculation, &r);
+    if (evaluate(pszCalculation, &r) < 0) {
+        printf("**** Failed :( - Evaluate failed for [%s]\n", pszCalculation);
+        return false;
+    }
 
     r.pszToken[strlen(pszExpectedResult)] = 0;
 
