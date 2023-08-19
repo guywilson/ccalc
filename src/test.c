@@ -14,9 +14,12 @@
 static bool testEvaluate(const char * pszCalculation, const char * pszExpectedResult) {
     token_t         r;
     bool            success;
+    int             error = 0;
 
-    if (evaluate(pszCalculation, &r) < 0) {
-        printf("**** Failed :( - Evaluate failed for [%s]\n", pszCalculation);
+    error = evaluate(pszCalculation, &r);
+
+    if (error < 0) {
+        printf("**** Failed :( - Evaluate failed for [%s] with error: %d\n", pszCalculation, error);
         return false;
     }
 
