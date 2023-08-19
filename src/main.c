@@ -220,6 +220,7 @@ int main(int argc, char ** argv) {
     char                szPrompt[32];
     bool                loop = true;
     token_t             result;
+    int                 error;
 
     rl_bind_key('\t', rl_complete);
 
@@ -289,7 +290,9 @@ int main(int argc, char ** argv) {
                 setTrigMode(radians);
             }
             else {
-                if (evaluate(pszCalculation, &result) == 0) {
+                error = evaluate(pszCalculation, &result);
+
+                if (error == EVALUATE_OK) {
                     pszFormattedResult = formatResult(&result);
 
                     printf("%s = %s\n", pszCalculation, pszFormattedResult);
@@ -297,7 +300,7 @@ int main(int argc, char ** argv) {
                     free(pszFormattedResult);
                 }
                 else {
-                    fprintf(stderr, "Evaluate failed for calc '%s'\n", pszCalculation);
+                    fprintf(stderr, "Evaluate failed for calc '%s' with error: %d\n", pszCalculation, error);
                 }
             }
         }
