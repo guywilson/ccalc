@@ -21,6 +21,8 @@ typedef enum {
     token_operator_AND,
     token_operator_OR,
     token_operator_XOR,
+    token_operator_left_shift,
+    token_operator_right_shift,
     token_function_sin,
     token_function_cos,
     token_function_tan,

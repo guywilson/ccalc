@@ -114,6 +114,22 @@ static bool isOperatorXOR(token_t * token) {
     return (token->pszToken[0] == '~');
 }
 
+static bool isOperatorLeftShift(token_t * token) {
+    if (strncmp(token->pszToken, "<<", 2) == 0) {
+        return true;
+    }
+
+    return false;
+}
+
+static bool isOperatorRightShift(token_t * token) {
+    if (strncmp(token->pszToken, ">>", 2) == 0) {
+        return true;
+    }
+
+    return false;
+}
+
 static bool isConstantPi(token_t * token) {
     if (strncmp(token->pszToken, "pi", 2) == 0) {
         return true;
@@ -262,7 +278,9 @@ bool isOperator(token_t * token) {
         isOperatorPower(token)      || 
         isOperatorAND(token)        || 
         isOperatorOR(token)         || 
-        isOperatorXOR(token));
+        isOperatorXOR(token))       ||
+        isOperatorLeftShift(token)  ||
+        isOperatorRightShift(token);
 }
 
 bool isConstant(token_t * token) {
@@ -286,7 +304,10 @@ bool isFunction(token_t * token) {
 
 associativity getOperatorAssociativity(token_t * t) {
     if (isOperator(t)) {
-        if (isOperatorPower(t)) {
+        if (
+            isOperatorPower(t)      || 
+            isOperatorLeftShift(t)  || 
+            isOperatorRightShift(t)) {
             return associativity_right;
         }
         else {
@@ -318,6 +339,8 @@ int getOperatorPrecedence(token_t * t) {
             case token_operator_AND:
             case token_operator_OR:
             case token_operator_XOR:
+            case token_operator_left_shift:
+            case token_operator_right_shift:
                 precedence = 4;
                 break;
 
@@ -494,6 +517,12 @@ token_t * tzrNextToken(tokenizer_t * t) {
     }
     else if (isOperatorXOR(token)) {
         token->type = token_operator_XOR;
+    }
+    else if (isOperatorLeftShift(token)) {
+        token->type = token_operator_left_shift;
+    }
+    else if (isOperatorRightShift(token)) {
+        token->type = token_operator_right_shift;
     }
     else if (isConstant(token)) {
         if (isConstantC(token)) {

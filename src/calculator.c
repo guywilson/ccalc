@@ -25,7 +25,7 @@ static int                          queueSize = 0;
 
 static token_t                      memory[10];
 
-const mpfr_prec_t                   basePrecision = 128L;
+const mpfr_prec_t                   basePrecision = 1024L;
 
 static void stackInit(void) {
     stackPointer = 0;
@@ -264,6 +264,14 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
 
         case token_operator_XOR:
             mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) ^ mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            break;
+
+        case token_operator_left_shift:
+            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) << mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            break;
+
+        case token_operator_right_shift:
+            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) >> mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
             break;
 
         default:
