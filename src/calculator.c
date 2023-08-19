@@ -177,7 +177,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                     /*
                     ** If we've got here, we must have unmatched parenthesis...
                     */
-                    return -1;
+                    return ERROR_RPN_UNMATCHED_PARENTHESIS;
                 }
             }
         }
@@ -201,14 +201,14 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         }
         else {
             lgLogError("NULL item on stack");
-            return -1;
+            return ERROR_RPN_NULL_STACK_POP;
         }
 
-        if (isBrace((token_t *)stackToken)) {
+        if (isBrace(stackToken)) {
             /*
             ** If we've got here, we must have unmatched parenthesis...
             */
-            return -1;
+            return ERROR_RPN_UNMATCHED_PARENTHESIS_ON_STACK;
         }
         else {
             lgLogDebug("qPutItem '%s'", stackToken->pszToken);
@@ -218,7 +218,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         }
     }
 
-    return 0;
+    return EVALUATE_OK;
 }
 
 static int evaluateOperation(token_t * result, token_t * operation, token_t * operand1, token_t * operand2) {
@@ -287,7 +287,7 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
             break;
 
         default:
-            return -1;
+            return ERROR_EVALUATE_UNRECOGNISED_OPERATOR;
     }
 
     if (getBase() == DECIMAL) {
@@ -306,7 +306,7 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
 
     stackPush(result);
     
-    return 0;
+    return EVALUATE_OK;
 }
 
 static int evaluateFunction(token_t * result, token_t * function, token_t * operand) {
@@ -404,7 +404,7 @@ static int evaluateFunction(token_t * result, token_t * function, token_t * oper
             break;
 
         default:
-            return -1;
+            return ERROR_EVALUATE_UNRECOGNISED_FUNCTION;
     }
 
     sprintf(szFormatStr, "%%.%ldRf", (long)getPrecision());
@@ -416,7 +416,7 @@ static int evaluateFunction(token_t * result, token_t * function, token_t * oper
 
     stackPush(result);
 
-    return 0;
+    return EVALUATE_OK;
 }
 
 int memoryStore(token_t * t, int memoryLocation) {
@@ -429,7 +429,7 @@ int memoryStore(token_t * t, int memoryLocation) {
     memory[memoryLocation].length = t->length;
     memory[memoryLocation].type = token_operand;
 
-    return 0;
+    return EVALUATE_OK;
 }
 
 token_t * memoryFetch(int memoryLocation) {
@@ -442,6 +442,7 @@ token_t * memoryFetch(int memoryLocation) {
 
 int evaluate(const char * pszExpression, token_t * result) {
     tokenizer_t             tokenizer;
+    int                     error = 0;
 
     tzrInit(&tokenizer, pszExpression, getBase());
 
@@ -452,9 +453,11 @@ int evaluate(const char * pszExpression, token_t * result) {
     ** Convert the calculation in infix notation to the postfix notation
     ** (Reverse Polish Notation) using the 'shunting yard algorithm'...
     */
-    if (_convertToRPN(&tokenizer)) {
+    error = _convertToRPN(&tokenizer);
+
+    if (error) {
         lgLogError("Error converting to RPN");
-        return -1;
+        return error;
     }
 
     stackInit();
@@ -474,24 +477,34 @@ int evaluate(const char * pszExpression, token_t * result) {
         ** Must be Operator or Function...
         */
         else if (isFunction(t)) {
-                token_t *       o1;
+            token_t *       o1;
 
-                o1 = stackPop();
+            o1 = stackPop();
 
-                token_t result;
+            token_t result;
 
-                evaluateFunction(&result, t, o1);
+            error = evaluateFunction(&result, t, o1);
+
+            if (error) {
+                lgLogError("evaluateFunction returned %d\n", error);
+                return error;
+            }
         }
         else if (isOperator(t)) {
-                token_t *       o1;
-                token_t *       o2;
+            token_t *       o1;
+            token_t *       o2;
 
-                o2 = stackPop();
-                o1 = stackPop();
+            o2 = stackPop();
+            o1 = stackPop();
 
-                token_t result;
+            token_t result;
 
-                evaluateOperation(&result, t, o1, o2);
+            evaluateOperation(&result, t, o1, o2);
+
+            if (error) {
+                lgLogError("evaluateOperation returned %d\n", error);
+                return error;
+            }
         }
 
         free(t->pszToken);
@@ -508,10 +521,10 @@ int evaluate(const char * pszExpression, token_t * result) {
     }
     else {
         tzrFinish(&tokenizer);
-        return -1;
+        return ERROR_EVALUATE_UNEXPECTED_TOKENS;
     }
 
     tzrFinish(&tokenizer);
     
-    return 0;
+    return EVALUATE_OK;
 }
