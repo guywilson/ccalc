@@ -1,12 +1,12 @@
 # ccalc
-A C version of JCalc using MPFR, GMP and Readline libraries
+A C version of JCalc using MPFR, GMP and Readline libraries. The calculator converts the entered calculation into Reverse Polish Notation (RPN) using the 'Shunting Yard' algorithm before evaluating the result.
 
-Copyright (C) 2023  Guy Wilson
+**Copyright (C) 2023  Guy Wilson**
 This program comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it
 under certain conditions.
 
-Operators supported:
+## Operators supported:
 	+, -, *, /, % (Modulo)
 	& (AND), | (OR), ~ (XOR)
 	<< (left shift), >> (right shift)
@@ -14,7 +14,7 @@ Operators supported:
 
 	Nesting is achieved with braces ()
 
-Functions supported:
+## Functions supported:
 	sin(x)	return the sine of the angle x degrees
 	cos(x)	return the cosine of the angle x degrees
 	tan(x)	return the tangent of the angle x degrees
@@ -27,11 +27,11 @@ Functions supported:
 	fact(x)	return the factorial of x
 	mem(n)	the value in memory location n, where n is 0 - 9
 
-Constants supported:
+## Constants supported:
 	pi	the ratio pi
 	c	the speed of light in a vacuum
 
-Commands supported:
+## Commands supported:
 	memstn	Store the last result in memory location n (0 - 9)
 	dec	Switch to decimal mode
 	hex	Switch to hexadecimal mode
