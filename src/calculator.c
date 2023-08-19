@@ -169,7 +169,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                     else {
                         queuePut(stackToken);
 
-                        free(t->pszToken);
+                        free(stackToken->pszToken);
                     }
                 }
 
@@ -526,7 +526,7 @@ int evaluate(const char * pszExpression, token_t * result) {
             token_t * tok = stackPop();
             lgLogError("Invalid item on stack '%s'\n", tok->pszToken);
         }
-        
+
         tzrFinish(&tokenizer);
         return ERROR_EVALUATE_UNEXPECTED_TOKENS;
     }
