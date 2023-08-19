@@ -34,7 +34,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define LOG_LEVEL "LOG_LEVEL_FATAL | LOG_LEVEL_ERROR | LOG_LEVEL_STATUS"
 
-#define DEFAULT_PRECISION                       12
+#define DEFAULT_PRECISION                       2
 
 const char * pszWarranty = 
     "CCALC (Command-line CALCulator)\n\n" \
@@ -117,10 +117,105 @@ static const char * getTrigModeString(void) {
     else {
         return "";
     }
+
+    return "";
+}
+
+static char * formatResult(token_t * result) {
+    size_t              allocateLen = 0;
+    char *              pszFormattedResult;
+    int                 i;
+    int                 j;
+    char                delimiter = 0;
+    int                 delimPos = 0;
+    int                 digitCount = 0;
+    int                 delimRangeLimit = 0;
+
+    switch (getBase()) {
+        case DECIMAL:
+            allocateLen = result->length;
+
+            if (allocateLen > 3) {
+                for (i = 0;i < result->length;i++) {
+                    if (result->pszToken[i] == '.') {
+                        allocateLen += (i - 1) / 3;
+                        delimRangeLimit = i - 1;
+                        break;
+                    }
+                }
+            }
+
+            delimiter = ',';
+            delimPos = 3;
+            break;
+
+        case BINARY:
+            allocateLen = result->length;
+
+            if (allocateLen > 8) {
+                allocateLen += ((allocateLen / 8) - 1);
+            }
+
+            delimiter = ' ';
+            delimPos = 8;
+            break;
+
+        case OCTAL:
+            break;
+
+        case HEXADECIMAL:
+            allocateLen = result->length;
+
+            if (allocateLen > 4) {
+                allocateLen += ((allocateLen / 4));
+            }
+
+            delimiter = ' ';
+            delimPos = 4;
+            break;
+    }
+
+    pszFormattedResult = (char *)malloc(allocateLen + 1);
+    memset(pszFormattedResult, delimiter, allocateLen);
+
+    pszFormattedResult[allocateLen] = 0;
+
+    if (allocateLen > result->length) {
+        if (getBase() != DECIMAL) {
+            delimRangeLimit = result->length - 1;
+        }
+        
+        i = allocateLen - 1;
+        j = result->length - 1;
+
+        digitCount = delimPos;
+
+        while (j >= 0) {
+            pszFormattedResult[i] = result->pszToken[j];
+
+            if (j <= delimRangeLimit) {
+                digitCount--;
+
+                if (digitCount == 0) {
+                    i--;
+                    digitCount = delimPos;
+                }
+            }
+
+            i--;
+            j--;
+        }
+    }
+    else {
+        strncpy(pszFormattedResult, result->pszToken, result->length);
+    }
+
+    return pszFormattedResult;
 }
 
 int main(int argc, char ** argv) {
     char *              pszCalculation;
+    char *              pszFormattedResult;
     char                szPrompt[32];
     bool                loop = true;
     token_t             result;
@@ -194,7 +289,11 @@ int main(int argc, char ** argv) {
             }
             else {
                 if (evaluate(pszCalculation, &result) == 0) {
-                    printf("%s = %s\n", pszCalculation, result.pszToken);
+                    pszFormattedResult = formatResult(&result);
+
+                    printf("%s = %s\n", pszCalculation, pszFormattedResult);
+
+                    free(pszFormattedResult);
                 }
                 else {
                     fprintf(stderr, "Evaluate failed for calc '%s'\n", pszCalculation);
