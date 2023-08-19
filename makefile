@@ -33,8 +33,8 @@ INCLUDEFLAGS = -I /usr/local/MacGPG2/include -I /opt/homebrew/include -I ${HOME}
 LIBFLAGS = -L /opt/homebrew/lib -L ${HOME}/Library/lib
 
 # Libraries
-STDLIBS = -lstrutils
-EXTLIBS = -lreadline -lgmp -lmpfr
+STDLIBS = 
+EXTLIBS = -lstrutils -lreadline -lmpfr -lgmp
 
 COMPILE.c = $(C) $(CFLAGS) $(DEPFLAGS) $(INCLUDEFLAGS) -o $@
 LINK.o = $(LINKER) $(LIBFLAGS) $(STDLIBS) -o $@
