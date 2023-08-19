@@ -520,6 +520,13 @@ int evaluate(const char * pszExpression, token_t * result) {
         memcpy(result, r, sizeof(token_t));
     }
     else {
+        lgLogError("evaluate(): Got invalid items on stack!");
+
+        while (stackPointer > 0) {
+            token_t * tok = stackPop();
+            lgLogError("Invalid item on stack '%s'\n", tok->pszToken);
+        }
+        
         tzrFinish(&tokenizer);
         return ERROR_EVALUATE_UNEXPECTED_TOKENS;
     }
