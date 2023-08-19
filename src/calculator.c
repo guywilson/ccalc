@@ -82,6 +82,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         if (isOperand(tokenizer, t)) {
             lgLogDebug("Got operand '%s'", t->pszToken);
             queuePut(t);
+
+            free(t->pszToken);
         }
         /*
         ** If the token is a function token, then push it onto the stack.
@@ -89,6 +91,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         else if (isFunction(t)) {
             lgLogDebug("Got function '%s'", t->pszToken);
             stackPush(t);
+
+            free(t->pszToken);
         }
         /*
         ** If the token is an operator, o1, then:
@@ -119,6 +123,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
 
                         op2 = stackPop();
                         queuePut(op2);
+
+                        free(op2->pszToken);
                     }
                     else {
                         break;
@@ -136,6 +142,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
             */
             if (isBraceLeft(t)) {
                 stackPush(t);
+
+                free(t->pszToken);
             }
             else {
                 /*
@@ -160,6 +168,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                     }
                     else {
                         queuePut(stackToken);
+
+                        free(t->pszToken);
                     }
                 }
 
@@ -203,6 +213,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         else {
             lgLogDebug("qPutItem '%s'", stackToken->pszToken);
             queuePut(stackToken);
+
+            free(stackToken->pszToken);
         }
     }
 
@@ -293,7 +305,7 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
     result->type = token_operand;
 
     stackPush(result);
-
+    
     return 0;
 }
 
