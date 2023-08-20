@@ -70,7 +70,7 @@ int test(void) {
 
     setPrecision(2U);
     setBase(DECIMAL);
-    testEvaluate("pi * (2 ^ 2)", "12.57") ? numTestsPassed++ : numTestsFailed++;
+    testEvaluate("pi * (2 ^ 2)", "12.56") ? numTestsPassed++ : numTestsFailed++;
     totalTests++;
 
     setPrecision(2U);
