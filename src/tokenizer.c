@@ -7,9 +7,6 @@
 
 #include "tokenizer.h"
 
-#define CONSTANT_C                      "299792458"
-#define CONSTANT_PI                     "3.1415926535897932384626433832795028841971693993751058209749445923"
-
 static const char * pszBraces = "({[]})";
 
 static char * trim(char * src) {
@@ -141,9 +138,22 @@ static bool isConstantPi(token_t * token) {
 
     return false;
 }
-
 static bool isConstantC(token_t * token) {
     if (strncmp(token->pszToken, "c", 2) == 0) {
+        return true;
+    }
+
+    return false;
+}
+static bool isConstantEuler(token_t * token) {
+    if (strncmp(token->pszToken, "eu", 2) == 0) {
+        return true;
+    }
+
+    return false;
+}
+static bool isConstantGravity(token_t * token) {
+    if (strncmp(token->pszToken, "g", 2) == 0) {
         return true;
     }
 
@@ -273,8 +283,8 @@ bool isBraceRight(token_t * token) {
 }
 
 bool isOperator(token_t * token) {
-    return 
-        (isOperatorPlus(token)      || 
+    return (
+        isOperatorPlus(token)       || 
         isOperatorMinus(token)      || 
         isOperatorMultiply(token)   || 
         isOperatorDivide(token)     || 
@@ -283,13 +293,17 @@ bool isOperator(token_t * token) {
         isOperatorRoot(token)       ||
         isOperatorAND(token)        || 
         isOperatorOR(token)         || 
-        isOperatorXOR(token))       ||
+        isOperatorXOR(token)        ||
         isOperatorLeftShift(token)  ||
-        isOperatorRightShift(token);
+        isOperatorRightShift(token));
 }
 
 bool isConstant(token_t * token) {
-    return (isConstantPi(token) || isConstantC(token));
+    return (
+        isConstantPi(token)         || 
+        isConstantC(token)          ||
+        isConstantEuler(token)      ||
+        isConstantGravity(token));
 }
 
 bool isFunction(token_t * token) {
@@ -497,56 +511,50 @@ token_t * tzrNextToken(tokenizer_t * t) {
     if (isOperand(t, token)) {
         token->type = token_operand;
     }
-    else if (isOperatorPlus(token)) {
-        token->type = token_operator_plus;
-    }
-    else if (isOperatorMinus(token)) {
-        token->type = token_operator_minus;
-    }
-    else if (isOperatorMultiply(token)) {
-        token->type = token_operator_multiply;
-    }
-    else if (isOperatorDivide(token)) {
-        token->type = token_operator_divide;
-    }
-    else if (isOperatorMod(token)) {
-        token->type = token_operator_mod;
-    }
-    else if (isOperatorPower(token)) {
-        token->type = token_operator_power;
-    }
-    else if (isOperatorRoot(token)) {
-        token->type = token_operator_root;
-    }
-    else if (isOperatorAND(token)) {
-        token->type = token_operator_AND;
-    }
-    else if (isOperatorOR(token)) {
-        token->type = token_operator_OR;
-    }
-    else if (isOperatorXOR(token)) {
-        token->type = token_operator_XOR;
-    }
-    else if (isOperatorLeftShift(token)) {
-        token->type = token_operator_left_shift;
-    }
-    else if (isOperatorRightShift(token)) {
-        token->type = token_operator_right_shift;
+    else if (isOperator(token)) {
+        if (isOperatorPlus(token)) {
+            token->type = token_operator_plus;
+        }
+        else if (isOperatorMinus(token)) {
+            token->type = token_operator_minus;
+        }
+        else if (isOperatorMultiply(token)) {
+            token->type = token_operator_multiply;
+        }
+        else if (isOperatorDivide(token)) {
+            token->type = token_operator_divide;
+        }
+        else if (isOperatorMod(token)) {
+            token->type = token_operator_mod;
+        }
+        else if (isOperatorPower(token)) {
+            token->type = token_operator_power;
+        }
+        else if (isOperatorRoot(token)) {
+            token->type = token_operator_root;
+        }
+        else if (isOperatorAND(token)) {
+            token->type = token_operator_AND;
+        }
+        else if (isOperatorOR(token)) {
+            token->type = token_operator_OR;
+        }
+        else if (isOperatorXOR(token)) {
+            token->type = token_operator_XOR;
+        }
+        else if (isOperatorLeftShift(token)) {
+            token->type = token_operator_left_shift;
+        }
+        else if (isOperatorRightShift(token)) {
+            token->type = token_operator_right_shift;
+        }
     }
     else if (isConstant(token)) {
-        if (isConstantC(token)) {
-            free(token->pszToken);
-
-            token->type = token_operand;
-            token->pszToken = strdup(CONSTANT_C);
-            token->length = strlen(token->pszToken);
+        if (isConstantPi(token)) {
+            token->type = token_constant_pi;
         }
-        else if (isConstantPi(token)) {
-            free(token->pszToken);
-
-            token->type = token_operand;
-            token->pszToken = strdup(CONSTANT_PI);
-            token->length = strlen(token->pszToken);
+        else if (isConstantC(token)) {
+            token->type = token_constant_c;
         }
     }
     else if (isFunction(token)) {

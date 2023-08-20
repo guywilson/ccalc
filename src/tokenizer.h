@@ -35,7 +35,10 @@ typedef enum {
     token_function_ln,
     token_function_fac,
     token_function_mem,
-    token_constant,
+    token_constant_pi,
+    token_constant_c,
+    token_constant_euler,
+    token_constant_gravity,
     token_brace,
     token_operand
 }

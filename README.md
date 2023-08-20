@@ -30,6 +30,8 @@ under certain conditions.
 
 ## Constants supported:
 	pi	the ratio pi
+	eu	Eulers constant
+	g	The gravitational constant G
 	c	the speed of light in a vacuum
 
 ## Commands supported:

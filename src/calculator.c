@@ -15,6 +15,9 @@
 #define LIST_SIZE                   128
 #define STACK_SIZE                   64
 
+#define CONSTANT_C            299792458U
+#define CONSTANT_G                  "0.000000000066743"
+
 static token_t                      tokenStack[STACK_SIZE];
 static token_t                      tokenQueue[LIST_SIZE];
 
@@ -91,6 +94,12 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         */
         if (isOperand(tokenizer, t)) {
             lgLogDebug("Got operand '%s'", t->pszToken);
+            queuePut(t);
+
+            free(t->pszToken);
+        }
+        else if (isConstant(t)) {
+            lgLogDebug("Got constant '%s'", t->pszToken);
             queuePut(t);
 
             free(t->pszToken);
@@ -227,6 +236,48 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
             free(stackToken->pszToken);
         }
     }
+
+    return EVALUATE_OK;
+}
+
+static int evaluateConstant(token_t * result, token_t * constant) {
+    mpfr_t          r;
+    char            pszResult[80];
+    char            szFormatStr[32];
+
+    lgLogInfo("Got constant: '%s'", constant->pszToken);
+
+    mpfr_init2(r, basePrecision);
+
+    switch (constant->type) {
+        case token_constant_pi:
+            mpfr_const_pi(r, MPFR_RNDA);
+            break;
+
+        case token_constant_c:
+            mpfr_set_ui(r, CONSTANT_C, MPFR_RNDA);
+            break;
+
+        case token_constant_euler:
+            mpfr_const_euler(r, MPFR_RNDA);
+            break;
+
+        case token_constant_gravity:
+            mpfr_strtofr(r, CONSTANT_G, NULL, getBase(), MPFR_RNDA);
+            break;
+
+        default:
+            return ERROR_EVALUATE_UNRECOGNISED_CONSTANT;
+    }
+
+    sprintf(szFormatStr, "%%.%ldRf", (long)getPrecision());
+
+    mpfr_sprintf(pszResult, szFormatStr, r);
+    result->pszToken = pszResult;
+    result->length = strlen(pszResult);
+    result->type = token_operand;
+
+    stackPush(result);
 
     return EVALUATE_OK;
 }
@@ -497,6 +548,18 @@ int evaluate(const char * pszExpression, token_t * result) {
         if (isOperand(&tokenizer, t)) {
             lgLogDebug("Got operand: '%s'", t->pszToken);
             stackPush(t);
+        }
+        else if (isConstant(t)) {
+            lgLogDebug("Got constant: '%s'", t->pszToken);
+
+            token_t result;
+
+            error = evaluateConstant(&result, t);
+
+            if (error) {
+                lgLogError("evaluateContant returned %d\n", error);
+                return error;
+            }
         }
         /*
         ** Must be Operator or Function...

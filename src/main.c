@@ -72,6 +72,8 @@ static void printUsage(void) {
     printf("\tmem(n)\tthe value in memory location n, where n is 0 - 9\n\n");
     printf("Constants supported:\n");
     printf("\tpi\tthe ratio pi\n");
+    printf("\teu\tEulers constant\n");
+    printf("\tg\tThe gravitational constant G\n");
     printf("\tc\tthe speed of light in a vacuum\n\n");
     printf("Commands supported:\n");
     printf("\tmemstn\tStore the last result in memory location n (0 - 9)\n");
