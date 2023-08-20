@@ -454,6 +454,35 @@ static int evaluateFunction(token_t * result, token_t * function, token_t * oper
             }
             break;
 
+        case token_function_sinh:
+            mpfr_sinh(r, o1, MPFR_RNDA);
+            break;
+
+        case token_function_cosh:
+            mpfr_cosh(r, o1, MPFR_RNDA);
+            break;
+            break;
+
+        case token_function_tanh:
+            mpfr_tanh(r, o1, MPFR_RNDA);
+            break;
+            break;
+
+        case token_function_asinh:
+            mpfr_asinh(r, o1, MPFR_RNDA);
+            break;
+            break;
+
+        case token_function_acosh:
+            mpfr_acosh(r, o1, MPFR_RNDA);
+            break;
+            break;
+
+        case token_function_atanh:
+            mpfr_atanh(r, o1, MPFR_RNDA);
+            break;
+            break;
+
         case token_function_sqrt:
             mpfr_sqrt(r, o1, MPFR_RNDA);
             break;

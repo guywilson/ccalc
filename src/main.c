@@ -65,6 +65,12 @@ static void printUsage(void) {
     printf("\tasin(x)\treturn the angle in degrees of arcsine(x)\n");
     printf("\tacos(x)\treturn the angle in degrees of arccosine(x)\n");
     printf("\tatan(x)\treturn the angle in degrees of arctangent(x)\n");
+    printf("\tsinh(x)\treturn the hyperbolic sine of the angle x radians\n");
+    printf("\tcosh(x)\treturn the hyperbolic cosine of the angle x radians\n");
+    printf("\ttanh(x)\treturn the hyperbolic tangent of the angle x radians\n");
+    printf("\tasinh(x) return the inverse hyperbolic sine of angle x in radians\n");
+    printf("\tacosh(x) return the inverse hyperbolic cosine of angle x in radians\n");
+    printf("\tatanh(x) return the inverse hyperbolic tangent of angle x in radians\n");
     printf("\tsqrt(x)\treturn the square root of x\n");
     printf("\tlog(x)\treturn the log of x\n");
     printf("\tln(x)\treturn the natural log of x\n");

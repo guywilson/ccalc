@@ -184,6 +184,30 @@ static bool isFunctionArcTangent(token_t * token) {
     return (strncmp(token->pszToken, "atan", 4) == 0);
 }
 
+static bool isFunctionHyperbolicSine(token_t * token) {
+    return (strncmp(token->pszToken, "sinh", 4) == 0);
+}
+
+static bool isFunctionHyperbolicCosine(token_t * token) {
+    return (strncmp(token->pszToken, "cosh", 4) == 0);
+}
+
+static bool isFunctionHyperbolicTangent(token_t * token) {
+    return (strncmp(token->pszToken, "tanh", 4) == 0);
+}
+
+static bool isFunctionInvHyperbolicSine(token_t * token) {
+    return (strncmp(token->pszToken, "asinh", 5) == 0);
+}
+
+static bool isFunctionInvHyperbolicCosine(token_t * token) {
+    return (strncmp(token->pszToken, "acosh", 5) == 0);
+}
+
+static bool isFunctionInvHyperbolicTangent(token_t * token) {
+    return (strncmp(token->pszToken, "atanh", 5) == 0);
+}
+
 static bool isFunctionSquareRoot(token_t * token) {
     return (strncmp(token->pszToken, "sqrt", 4) == 0);
 }
@@ -575,6 +599,24 @@ token_t * tzrNextToken(tokenizer_t * t) {
         }
         else if (isFunctionArcTangent(token)) {
             token->type = token_function_atan;
+        }
+        else if (isFunctionHyperbolicSine(token)) {
+            token->type = token_function_sinh;
+        }
+        else if (isFunctionHyperbolicCosine(token)) {
+            token->type = token_function_cosh;
+        }
+        else if (isFunctionHyperbolicTangent(token)) {
+            token->type = token_function_tanh;
+        }
+        else if (isFunctionInvHyperbolicSine(token)) {
+            token->type = token_function_asinh;
+        }
+        else if (isFunctionInvHyperbolicCosine(token)) {
+            token->type = token_function_acosh;
+        }
+        else if (isFunctionInvHyperbolicTangent(token)) {
+            token->type = token_function_atanh;
         }
         else if (isFunctionSquareRoot(token)) {
             token->type = token_function_sqrt;

@@ -22,6 +22,12 @@ under certain conditions.
 	asin(x)	return the angle in degrees of arcsine(x)
 	acos(x)	return the angle in degrees of arccosine(x)
 	atan(x)	return the angle in degrees of arctangent(x)
+	sinh(x)	return the hyperbolic sine of the angle x radians
+	cosh(x)	return the hyperbolic cosine of the angle x radians
+	tanh(x)	return the hyperbolic tangent of the angle x radians
+	asinh(x) return the inverse hyperbolic sine of angle x in radians
+	acosh(x) return the inverse hyperbolic cosine of angle x in radians
+	atanh(x) return the inverse hyperbolic tangent of angle x in radians
 	sqrt(x)	return the square root of x
 	log(x)	return the log of x
 	ln(x)	return the natural log of x
