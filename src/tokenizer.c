@@ -30,7 +30,7 @@ static char * trim(char * src) {
 
 static bool isdelim(char ch) {
     int                     i;
-    static const char *     pszDelimiters = " \t\n\r+-*/^%&|~()[]{}";
+    static const char *     pszDelimiters = " \t\n\r+-*/^:%&|~()[]{}";
 
     for (i = 0;i < strlen(pszDelimiters);i++) {
         if (ch == pszDelimiters[i]) {
@@ -100,6 +100,10 @@ static bool isOperatorMod(token_t * token) {
 
 static bool isOperatorPower(token_t * token) {
     return (token->pszToken[0] == '^');
+}
+
+static bool isOperatorRoot(token_t * token) {
+    return (token->pszToken[0] == ':');
 }
 
 static bool isOperatorAND(token_t * token) {
@@ -276,6 +280,7 @@ bool isOperator(token_t * token) {
         isOperatorDivide(token)     || 
         isOperatorMod(token)        || 
         isOperatorPower(token)      || 
+        isOperatorRoot(token)       ||
         isOperatorAND(token)        || 
         isOperatorOR(token)         || 
         isOperatorXOR(token))       ||
@@ -336,6 +341,7 @@ int getOperatorPrecedence(token_t * t) {
                 break;
 
             case token_operator_power:
+            case token_operator_root:
             case token_operator_AND:
             case token_operator_OR:
             case token_operator_XOR:
@@ -508,6 +514,9 @@ token_t * tzrNextToken(tokenizer_t * t) {
     }
     else if (isOperatorPower(token)) {
         token->type = token_operator_power;
+    }
+    else if (isOperatorRoot(token)) {
+        token->type = token_operator_root;
     }
     else if (isOperatorAND(token)) {
         token->type = token_operator_AND;

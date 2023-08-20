@@ -18,6 +18,7 @@ typedef enum {
     token_operator_divide,
     token_operator_mod,
     token_operator_power,
+    token_operator_root,
     token_operator_AND,
     token_operator_OR,
     token_operator_XOR,

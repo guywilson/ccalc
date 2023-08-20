@@ -55,7 +55,8 @@ static void printUsage(void) {
     printf("\t+, -, *, /, %% (Modulo)\n");
     printf("\t& (AND), | (OR), ~ (XOR)\n");
     printf("\t<< (left shift), >> (right shift)\n");
-    printf("\t^ (power, e.g. x to the power of y)\n\n");
+    printf("\t^ (power, e.g. x to the power of y)\n");
+    printf("\t: (root, e.g. x : y - the yth root of x)\n\n");
     printf("\tNesting is achieved with braces ()\n\n");
     printf("Functions supported:\n");
     printf("\tsin(x)\treturn the sine of the angle x degrees\n");

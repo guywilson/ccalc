@@ -277,6 +277,10 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
             mpfr_pow(r, o1, o2, MPFR_RNDA);
             break;
 
+        case token_operator_root:
+            mpfr_rootn_ui(r, o1, mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            break;
+
         case token_operator_AND:
             ui = mpfr_get_ui(o1, MPFR_RNDA) & mpfr_get_ui(o2, MPFR_RNDA);
             lgLogStatus("Got UI result %LU for operator '&'", ui);
