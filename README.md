@@ -11,7 +11,8 @@ under certain conditions.
 	& (AND), | (OR), ~ (XOR)
 	<< (left shift), >> (right shift)
 	^ (power, e.g. x to the power of y)
-
+	: (root, e.g. x : y - the yth root of x)
+    
 	Nesting is achieved with braces ()
 
 ## Functions supported:
