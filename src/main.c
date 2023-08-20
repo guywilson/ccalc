@@ -32,7 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "utils.h"
 #include "test.h"
 
-#define LOG_LEVEL "LOG_LEVEL_FATAL | LOG_LEVEL_ERROR | LOG_LEVEL_STATUS"
+#define DEFAULT_LOG_LEVEL                       (LOG_LEVEL_FATAL | LOG_LEVEL_ERROR)
 
 #define DEFAULT_PRECISION                       2
 
@@ -230,7 +230,8 @@ int main(int argc, char ** argv) {
     setBase(DECIMAL);
     setTrigMode(degrees);
 
-    lgOpenStdout(LOG_LEVEL);
+    lgOpenStdout("LOG_LEVEL_ALL");
+    lgSetLogLevel(DEFAULT_LOG_LEVEL);
 
     result.type = token_operand;
     result.pszToken = "0";
@@ -257,6 +258,18 @@ int main(int argc, char ** argv) {
             }
             else if (strncmp(pszCalculation, "setp", 4) == 0) {
                 setPrecision(strtol(&pszCalculation[4], NULL, BASE_10));
+            }
+            else if (strncmp(pszCalculation, "dbgon", 5) == 0) {
+                lgSetLogLevel(LOG_LEVEL_ALL);
+            }
+            else if (strncmp(pszCalculation, "dbgoff", 5) == 0) {
+                lgSetLogLevel(DEFAULT_LOG_LEVEL);
+            }
+            else if (strncmp(pszCalculation, "staon", 5) == 0) {
+                lgSetLogLevel(DEFAULT_LOG_LEVEL | LOG_LEVEL_STATUS);
+            }
+            else if (strncmp(pszCalculation, "staoff", 5) == 0) {
+                lgSetLogLevel(DEFAULT_LOG_LEVEL);
             }
             else if (strncmp(pszCalculation, "memst", 5) == 0) {
                 int m = atoi(&pszCalculation[5]);

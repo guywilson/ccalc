@@ -40,8 +40,13 @@ static void stackPush(token_t * token) {
 }
 
 static token_t * stackPop(void) {
-    stackPointer--;
-    return &tokenStack[stackPointer];
+    if (stackPointer > 0) {
+        stackPointer--;
+        return &tokenStack[stackPointer];
+    }
+    else {
+        return NULL;
+    }
 }
 
 static token_t * stackPeek(void) {
@@ -64,8 +69,13 @@ static void queuePut(token_t * token) {
 }
 
 static token_t * queueGet(void) {
-    queueSize--;
-    return &tokenQueue[queueHead++];
+    if (queueSize > 0) {
+        queueSize--;
+        return &tokenQueue[queueHead++];
+    }
+    else {
+        return NULL;
+    }
 }
 
 static int getQueueSize(void) {
@@ -228,6 +238,7 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
     mpz_t           integer_r;
     char            pszResult[80];
     char            szFormatStr[32];
+    unsigned long   ui;
 
     lgLogInfo("Got operation: '%s'", operation->pszToken);
     lgLogInfo("Got operand 1: '%s'", operand1->pszToken);
@@ -267,23 +278,33 @@ static int evaluateOperation(token_t * result, token_t * operation, token_t * op
             break;
 
         case token_operator_AND:
-            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) & mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            ui = mpfr_get_ui(o1, MPFR_RNDA) & mpfr_get_ui(o2, MPFR_RNDA);
+            lgLogStatus("Got UI result %LU for operator '&'", ui);
+            mpfr_set_ui(r, ui, MPFR_RNDA);
             break;
 
         case token_operator_OR:
-            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) | mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            ui = mpfr_get_ui(o1, MPFR_RNDA) | mpfr_get_ui(o2, MPFR_RNDA);
+            lgLogStatus("Got UI result %LU for operator '|'", ui);
+            mpfr_set_ui(r, ui, MPFR_RNDA);
             break;
 
         case token_operator_XOR:
-            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) ^ mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            ui = mpfr_get_ui(o1, MPFR_RNDA) ^ mpfr_get_ui(o2, MPFR_RNDA);
+            lgLogStatus("Got UI result %LU for operator '^'", ui);
+            mpfr_set_ui(r, ui, MPFR_RNDA);
             break;
 
         case token_operator_left_shift:
-            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) << mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            ui = mpfr_get_ui(o1, MPFR_RNDA) << mpfr_get_ui(o2, MPFR_RNDA);
+            lgLogStatus("Got UI result %LU for operator '<<'", ui);
+            mpfr_set_ui(r, ui, MPFR_RNDA);
             break;
 
         case token_operator_right_shift:
-            mpfr_set_ui(r, mpfr_get_ui(o1, MPFR_RNDA) >> mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+            ui = mpfr_get_ui(o1, MPFR_RNDA) >> mpfr_get_ui(o2, MPFR_RNDA);
+            lgLogStatus("Got UI result %LU for operator '>>'", ui);
+            mpfr_set_ui(r, ui, MPFR_RNDA);
             break;
 
         default:
@@ -481,6 +502,13 @@ int evaluate(const char * pszExpression, token_t * result) {
 
             o1 = stackPop();
 
+            if (o1 == NULL) {
+                lgLogError("NULL operand for function '%s'", t->pszToken);
+                free(t->pszToken);
+                tzrFinish(&tokenizer);
+                return ERROR_EVALUATE_NULL_STACK_POP;
+            }
+
             token_t result;
 
             error = evaluateFunction(&result, t, o1);
@@ -496,6 +524,13 @@ int evaluate(const char * pszExpression, token_t * result) {
 
             o2 = stackPop();
             o1 = stackPop();
+
+            if (o1 == NULL || o2 == NULL) {
+                lgLogError("NULL operand for operator '%s'", t->pszToken);
+                free(t->pszToken);
+                tzrFinish(&tokenizer);
+                return ERROR_EVALUATE_NULL_STACK_POP;
+            }
 
             token_t result;
 

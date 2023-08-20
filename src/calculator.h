@@ -10,6 +10,7 @@
 #define ERROR_EVALUATE_UNRECOGNISED_OPERATOR            -4
 #define ERROR_EVALUATE_UNRECOGNISED_FUNCTION            -5
 #define ERROR_EVALUATE_UNEXPECTED_TOKENS                -6
+#define ERROR_EVALUATE_NULL_STACK_POP                   -7
 
 int         memoryStore(token_t * t, int memoryLocation);
 token_t *   memoryFetch(int memoryLocation);
