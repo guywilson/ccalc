@@ -171,6 +171,8 @@ static char * formatResult(token_t * result) {
             break;
 
         case OCTAL:
+            allocateLen = result->length;
+            delimiter = 0;
             break;
 
         case HEXADECIMAL:
@@ -190,7 +192,7 @@ static char * formatResult(token_t * result) {
 
     pszFormattedResult[allocateLen] = 0;
 
-    if (allocateLen > result->length) {
+    if (allocateLen > result->length && getBase() != OCTAL) {
         if (getBase() != DECIMAL) {
             delimRangeLimit = result->length - 1;
         }
