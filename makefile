@@ -27,7 +27,11 @@ PRECOMPILE = @ mkdir -p $(BUILD) $(DEP)
 # postcompile step
 POSTCOMPILE = @ mv -f $(DEP)/$*.Td $(DEP)/$*.d
 
-CFLAGS = -c -O2 -Wall -pedantic
+CFLAGS_BASE=-c -Wall -pedantic
+CFLAGS_REL=$(CFLAGS_BASE) -O2
+CFLAGS_DBG=$(CFLAGS_BASE) -g
+
+CFLAGS=$(CFLAGS_REL)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP)/$*.Td
 INCLUDEFLAGS = -I /usr/local/MacGPG2/include -I /opt/homebrew/include -I ${HOME}/Library/include
 LIBFLAGS = -L /opt/homebrew/lib -L ${HOME}/Library/lib
