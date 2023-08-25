@@ -85,6 +85,11 @@ static int getQueueSize(void) {
     return queueSize;
 }
 
+static void inline freeToken(token_t * t) {
+    free(t->pszToken);
+    free(t);
+}
+
 static int _convertToRPN(tokenizer_t * tokenizer) {
     while (tzrHasMoreTokens(tokenizer)) {
         token_t * t = tzrNextToken(tokenizer);
@@ -95,14 +100,10 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         if (isOperand(tokenizer, t)) {
             lgLogDebug("Got operand '%s'", t->pszToken);
             queuePut(t);
-
-            free(t->pszToken);
         }
         else if (isConstant(t)) {
             lgLogDebug("Got constant '%s'", t->pszToken);
             queuePut(t);
-
-            free(t->pszToken);
         }
         /*
         ** If the token is a function token, then push it onto the stack.
@@ -110,8 +111,6 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         else if (isFunction(t)) {
             lgLogDebug("Got function '%s'", t->pszToken);
             stackPush(t);
-
-            free(t->pszToken);
         }
         /*
         ** If the token is an operator, o1, then:
@@ -161,8 +160,6 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
             */
             if (isBraceLeft(t)) {
                 stackPush(t);
-
-                free(t->pszToken);
             }
             else {
                 /*
@@ -187,8 +184,6 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                     }
                     else {
                         queuePut(stackToken);
-
-                        free(stackToken->pszToken);
                     }
                 }
 
@@ -200,6 +195,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                 }
             }
         }
+
+        freeToken(t);
     }
 
     lgLogDebug("Num items in stack %d", stackPointer);
@@ -232,8 +229,6 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         else {
             lgLogDebug("qPutItem '%s'", stackToken->pszToken);
             queuePut(stackToken);
-
-            free(stackToken->pszToken);
         }
     }
 
