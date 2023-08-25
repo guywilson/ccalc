@@ -33,7 +33,7 @@ const mpfr_prec_t                   basePrecision = 1024L;
 static void stackInit(void) {
     stackPointer = 0;
 
-    memset(tokenStack, 0, STACK_SIZE);
+    memset(tokenStack, 0, STACK_SIZE * sizeof(token_t));
 }
 
 static void stackPush(token_t * token) {
@@ -61,7 +61,7 @@ static void queueInit(void) {
     queueTail = 0;
     queueSize = 0;
 
-    memset(tokenQueue, 0, LIST_SIZE);
+    memset(tokenQueue, 0, LIST_SIZE * sizeof(token_t));
 }
 
 static void queuePut(token_t * token) {
