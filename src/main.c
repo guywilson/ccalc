@@ -29,6 +29,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "logger.h"
 #include "tokenizer.h"
 #include "calculator.h"
+#include "timeutils.h"
 #include "utils.h"
 #include "test.h"
 
@@ -37,18 +38,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define DEFAULT_PRECISION                       2
 
 const char * pszWarranty = 
-    "CCALC (Command-line CALCulator)\n\n" \
-    "Copyright (C) 2023  Guy Wilson\n" \
     "This program comes with ABSOLUTELY NO WARRANTY.\n" \
     "This is free software, and you are welcome to redistribute it\n" \
     "under certain conditions.\n\n";
 
 static void printBanner(void) {
-	printf("\nWelcome to CCALC. A cmd line scientific calculator. Copyright © Guy Wilson\n");
+    int         year;
+
+    tmUpdate();
+    year = tmGetYear();
+
+	printf("\nWelcome to CCALC. A cmd line scientific calculator. Copyright © Guy Wilson %d\n", year);
 	printf("Type a calculation or command at the prompt, type 'help' for info.\n\n");
 }
 
 static void printUsage(void) {
+    printBanner();
     printf("%s", pszWarranty);
 
     printf("Operators supported:\n");
@@ -90,6 +95,8 @@ static void printUsage(void) {
     printf("\tdeg\tSwitch to degrees mode for trigometric functions\n");
     printf("\trad\tSwitch to radians mode for trigometric functions\n");
     printf("\tsetpn\tSet the precision to n\n");
+    printf("\tfmton\tTurn on output formatting (on by default)\n");
+    printf("\tfmtoff\tTurn off output formatting\n");
     printf("\thelp\tThis help text\n");
     printf("\ttest\tRun a self test of the calculator\n");
     printf("\texit\tExit the calculator\n\n");
@@ -230,6 +237,7 @@ int main(int argc, char ** argv) {
     char *              pszFormattedResult;
     char                szPrompt[32];
     bool                loop = true;
+    bool                doFormat = true;
     token_t             result;
     int                 error;
 
@@ -273,14 +281,20 @@ int main(int argc, char ** argv) {
             else if (strncmp(pszCalculation, "dbgon", 5) == 0) {
                 lgSetLogLevel(LOG_LEVEL_ALL);
             }
-            else if (strncmp(pszCalculation, "dbgoff", 5) == 0) {
+            else if (strncmp(pszCalculation, "dbgoff", 6) == 0) {
                 lgSetLogLevel(DEFAULT_LOG_LEVEL);
             }
             else if (strncmp(pszCalculation, "staon", 5) == 0) {
                 lgSetLogLevel(DEFAULT_LOG_LEVEL | LOG_LEVEL_STATUS);
             }
-            else if (strncmp(pszCalculation, "staoff", 5) == 0) {
+            else if (strncmp(pszCalculation, "staoff", 6) == 0) {
                 lgSetLogLevel(DEFAULT_LOG_LEVEL);
+            }
+            else if (strncmp(pszCalculation, "fmton", 5) == 0) {
+                doFormat = true;
+            }
+            else if (strncmp(pszCalculation, "fmtoff", 6) == 0) {
+                doFormat = false;
             }
             else if (strncmp(pszCalculation, "memst", 5) == 0) {
                 int m = atoi(&pszCalculation[5]);
@@ -317,11 +331,16 @@ int main(int argc, char ** argv) {
                 error = evaluate(pszCalculation, &result);
 
                 if (error == EVALUATE_OK) {
-                    pszFormattedResult = formatResult(&result);
+                    if (doFormat) {
+                        pszFormattedResult = formatResult(&result);
 
-                    printf("%s = %s\n", pszCalculation, pszFormattedResult);
+                        printf("%s = %s\n", pszCalculation, pszFormattedResult);
 
-                    free(pszFormattedResult);
+                        free(pszFormattedResult);
+                    }
+                    else {
+                        printf("%s = %s\n", pszCalculation, result.pszToken);
+                    }
                 }
                 else {
                     fprintf(stderr, "Evaluate failed for calc '%s' with error: %d\n", pszCalculation, error);
