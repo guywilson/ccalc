@@ -1,3 +1,6 @@
+#include <gmp.h>
+#include <mpfr.h>
+
 #ifndef __INCL_TOKENIZER
 #define __INCL_TOKENIZER
 
@@ -12,43 +15,64 @@
 #define BINARY                  BASE_2
 
 typedef enum {
-    token_operator_plus,
-    token_operator_minus,
-    token_operator_multiply,
-    token_operator_divide,
-    token_operator_mod,
-    token_operator_power,
-    token_operator_root,
-    token_operator_AND,
-    token_operator_OR,
-    token_operator_XOR,
-    token_operator_left_shift,
-    token_operator_right_shift,
-    token_function_sin,
-    token_function_cos,
-    token_function_tan,
-    token_function_asin,
-    token_function_acos,
-    token_function_atan,
-    token_function_sinh,
-    token_function_cosh,
-    token_function_tanh,
-    token_function_asinh,
-    token_function_acosh,
-    token_function_atanh,
-    token_function_sqrt,
-    token_function_log,
-    token_function_ln,
-    token_function_fac,
-    token_function_mem,
-    token_constant_pi,
-    token_constant_c,
-    token_constant_euler,
-    token_constant_gravity,
+    token_operator,
+    token_function,
+    token_constant,
     token_brace,
     token_operand
 }
 token_type_t;
+
+typedef enum {
+    constant_pi,
+    constant_c,
+    constant_euler,
+    constant_gravity
+}
+constant_id_t;
+
+typedef enum {
+    brace_left,
+    brace_right
+}
+brace_id_t;
+
+typedef enum {
+    operator_plus,
+    operator_minus,
+    operator_multiply,
+    operator_divide,
+    operator_mod,
+    operator_power,
+    operator_root,
+    operator_AND,
+    operator_OR,
+    operator_XOR,
+    operator_left_shift,
+    operator_right_shift
+}
+operator_id_t;
+
+typedef enum {
+    function_sin,
+    function_cos,
+    function_tan,
+    function_asin,
+    function_acos,
+    function_atan,
+    function_sinh,
+    function_cosh,
+    function_tanh,
+    function_asinh,
+    function_acosh,
+    function_atanh,
+    function_sqrt,
+    function_log,
+    function_ln,
+    function_fac,
+    function_mem
+}
+function_id_t;
 
 typedef enum {
     associativity_left,
@@ -67,25 +91,57 @@ typedef struct {
 tokenizer_t;
 
 typedef struct {
-    int                     length;
+    operator_id_t           ID;
+
+    int                     prescedence;
+    associativity           associativity;
+}
+operator_t;
+
+typedef struct {
+    function_id_t           ID;
+}
+function_t;
+
+typedef struct {
+    mpfr_t                  value;
+    int                     base;
+}
+operand_t;
+
+typedef struct {
+    constant_id_t           ID;
+}
+constant_t;
+
+typedef struct {
+    brace_id_t              ID;
+}
+brace_t;
+
+typedef union {
+    operand_t               operand;
+    operator_t              operator;
+    function_t              function;
+    constant_t              constant;
+    brace_t                 brace;
+}
+item_t;
+
+typedef struct {
     token_type_t            type;
 
-    char *                  pszToken;
-
-    int                     operatorPrescedence;
-    associativity           operatorAssociativity;
+    item_t                  item;
 }
 token_t;
 
-bool            isOperand(tokenizer_t * t, token_t * token);
-bool            isBrace(token_t * token);
-bool            isBraceLeft(token_t * token);
-bool            isBraceRight(token_t * token);
-bool            isOperator(token_t * token);
-bool            isConstant(token_t * token);
-bool            isFunction(token_t * token);
-associativity   getOperatorAssociativity(token_t * t);
-int             getOperatorPrecedence(token_t * t);
+bool            isOperand(tokenizer_t * t, char * pszToken);
+bool            isBrace(char * pszToken);
+bool            isBraceLeft(char * pszToken);
+bool            isBraceRight(char * pszToken);
+bool            isOperator(char * pszToken);
+bool            isConstant(char * pszToken);
+bool            isFunction(char * pszToken);
 void            tzrInit(tokenizer_t * t, const char * pszExpression, int base);
 void            tzrFinish(tokenizer_t * t);
 bool            tzrHasMoreTokens(tokenizer_t * t);

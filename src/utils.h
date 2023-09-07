@@ -8,6 +8,8 @@
 #ifndef __INCL_UTILS
 #define __INCL_UTILS
 
+#define getBasePrecision()              (mpfr_prec_t)1024L
+
 typedef enum {
     radians,
     degrees

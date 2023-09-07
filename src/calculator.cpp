@@ -1,16 +1,20 @@
+#include <string>
+#include <cstring>
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 #include <gmp.h>
 #include <mpfr.h>
 
 #include "logger.h"
 #include "tokenizer.h"
+#include "token.h"
 #include "utils.h"
 #include "calculator.h"
+
+using namespace std;
 
 #define LIST_SIZE                   128
 #define STACK_SIZE                   64
@@ -26,55 +30,45 @@ static int                          queueHead = 0;
 static int                          queueTail = 0;
 static int                          queueSize = 0;
 
-static token_t                      memory[10];
-
-const mpfr_prec_t                   basePrecision = 1024L;
+static operand_t                    memory[10];
 
 static void stackInit(void) {
     stackPointer = 0;
-
-    memset(tokenStack, 0, STACK_SIZE * sizeof(token_t));
 }
 
-static void stackPush(token_t * token) {
-    memcpy(&tokenStack[stackPointer], token, sizeof(token_t));
-    tokenStack[stackPointer].pszToken = strndup(token->pszToken, token->length);
-    stackPointer++;
+static void stackPush(token_t & token) {
+    tokenStack[stackPointer++] = token;
 }
 
-static token_t * stackPop(void) {
+static token_t & stackPop(void) {
     if (stackPointer > 0) {
         stackPointer--;
-        return &tokenStack[stackPointer];
+        return tokenStack[stackPointer];
     }
     else {
         return NULL;
     }
 }
 
-static token_t * stackPeek(void) {
-    return &tokenStack[stackPointer - 1];
+static token_t & stackPeek(void) {
+    return tokenStack[stackPointer - 1];
 }
 
 static void queueInit(void) {
     queueHead = 0;
     queueTail = 0;
     queueSize = 0;
-
-    memset(tokenQueue, 0, LIST_SIZE * sizeof(token_t));
 }
 
-static void queuePut(token_t * token) {
-    memcpy(&tokenQueue[queueTail], token, sizeof(token_t));
-    tokenQueue[queueTail].pszToken = strndup(token->pszToken, token->length);
-    queueTail++;
+static void queuePut(token_t & token) {
+    tokenQueue[queueTail++] = token;
     queueSize++;
 }
 
-static token_t * queueGet(void) {
+static token_t & queueGet(void) {
     if (queueSize > 0) {
         queueSize--;
-        return &tokenQueue[queueHead++];
+        return tokenQueue[queueHead++];
     }
     else {
         return NULL;
@@ -86,8 +80,7 @@ static int getQueueSize(void) {
 }
 
 static void inline freeToken(token_t * t) {
-    free(t->pszToken);
-    free(t);
+    delete t;
 }
 
 static int _convertToRPN(tokenizer_t * tokenizer) {
@@ -97,23 +90,20 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         /*
         ** If the token is a number, then push it to the output queue.
         */
-        if (isOperand(tokenizer, t)) {
-            lgLogDebug("Got operand '%s'", t->pszToken);
+        if (t->type == token_operand) {
             queuePut(t);
         }
-        else if (isConstant(t)) {
-            lgLogDebug("Got constant '%s'", t->pszToken);
+        else if (t->type == token_constant) {
             queuePut(t);
         }
         /*
         ** If the token is a function token, then push it onto the stack.
         */
-        else if (isFunction(t)) {
-            lgLogDebug("Got function '%s'", t->pszToken);
+        else if (t->type == token_function) {
             stackPush(t);
         }
         /*
-        ** If the token is an operator, o1, then:
+        ** If the token is an operator, operand->value, then:
         **	while there is an operator token o2, at the top of the operator stack
         **	and either
         **	o1 is left-associative and its precedence is less than or equal to that
@@ -122,27 +112,25 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         **	pop o2 off the operator stack, onto the output queue;
         **	at the end of iteration push o1 onto the operator stack.
         */
-        else if (isOperator(t)) {
-            lgLogDebug("Got operator '%s'", t->pszToken);
+        else if (t->type == token_operator) {
+            operator_t op = t->item.operator;
 
             while (stackPointer > 0) {
-                token_t *       topToken;
+                token_t * topToken;
     
                 topToken = stackPeek();
 
-                if (!isOperator(topToken) && !isFunction(topToken)) {
+                if (topToken->type != token_operator && topToken->type != token_function) {
                     break;
                 }
                 else {
-                    if ((getOperatorAssociativity(t) == associativity_left && getOperatorPrecedence(t) <= getOperatorPrecedence(topToken)) ||
+                    if ((op.associativity == associativity_left && op.prescedence <= topToken->item.operator.prescedence) ||
                         (getOperatorAssociativity(t) == associativity_right && getOperatorPrecedence(t) < getOperatorPrecedence(topToken)))
                     {
                         token_t * op2;
 
                         op2 = stackPop();
                         queuePut(op2);
-
-                        free(op2->pszToken);
                     }
                     else {
                         break;
@@ -152,9 +140,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
 
             stackPush(t);
         }
-        else if (isBrace(t)) {
-            lgLogDebug("Got brace '%s'", t->pszToken);
-
+        else if (t->type == token_brace) {
             /*
             ** If the token is a left parenthesis (i.e. "("), then push it onto the stack.
             */
@@ -212,10 +198,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
 
         stackToken = stackPop();
 
-        if (stackToken != NULL) {
-            lgLogDebug("stackPop '%s'", stackToken->pszToken);
-        }
-        else {
+        if (stackToken == NULL) {
             lgLogError("NULL item on stack");
             return ERROR_RPN_NULL_STACK_POP;
         }
@@ -227,7 +210,6 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
             return ERROR_RPN_UNMATCHED_PARENTHESIS_ON_STACK;
         }
         else {
-            lgLogDebug("qPutItem '%s'", stackToken->pszToken);
             queuePut(stackToken);
         }
     }
@@ -235,269 +217,212 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
     return EVALUATE_OK;
 }
 
-static int evaluateConstant(token_t * result, token_t * constant) {
-    mpfr_t          r;
-    char            pszResult[80];
-    char            szFormatStr[32];
+static int evaluateConstant(operand_t * result, constant_t constant) {
+    mpfr_init2(result->value, getBasePrecision());
 
-    lgLogInfo("Got constant: '%s'", constant->pszToken);
-
-    mpfr_init2(r, basePrecision);
-
-    switch (constant->type) {
-        case token_constant_pi:
-            mpfr_const_pi(r, MPFR_RNDA);
+    switch (constant.ID) {
+        case constant_pi:
+            mpfr_const_pi(result->value, MPFR_RNDA);
             break;
 
-        case token_constant_c:
-            mpfr_set_ui(r, CONSTANT_C, MPFR_RNDA);
+        case constant_c:
+            mpfr_set_ui(result->value, CONSTANT_C, MPFR_RNDA);
             break;
 
-        case token_constant_euler:
-            mpfr_const_euler(r, MPFR_RNDA);
+        case constant_euler:
+            mpfr_const_euler(result->value, MPFR_RNDA);
             break;
 
-        case token_constant_gravity:
-            mpfr_strtofr(r, CONSTANT_G, NULL, getBase(), MPFR_RNDA);
+        case constant_gravity:
+            mpfr_strtofr(result->value, CONSTANT_G, NULL, getBase(), MPFR_RNDA);
             break;
 
         default:
             return ERROR_EVALUATE_UNRECOGNISED_CONSTANT;
     }
 
-    sprintf(szFormatStr, "%%.%ldRf", (long)getPrecision());
-
-    mpfr_sprintf(pszResult, szFormatStr, r);
-    result->pszToken = pszResult;
-    result->length = strlen(pszResult);
-    result->type = token_operand;
-
-    stackPush(result);
-
     return EVALUATE_OK;
 }
 
-static int evaluateOperation(token_t * result, token_t * operation, token_t * operand1, token_t * operand2) {
-    mpfr_t          o1;
-    mpfr_t          o2;
-    mpfr_t          r;
+static int evaluateOperation(operand_t * result, operator_t operator, operand_t * operand1, operand_t * operand2) {
     mpz_t           integer_r;
-    char            pszResult[80];
-    char            szFormatStr[32];
     unsigned long   ui;
 
-    lgLogInfo("Got operation: '%s'", operation->pszToken);
-    lgLogInfo("Got operand 1: '%s'", operand1->pszToken);
-    lgLogInfo("Got operand 2: '%s'", operand2->pszToken);
+    mpfr_init2(result->value, getBasePrecision());
 
-    mpfr_init2(o1, basePrecision);
-    mpfr_strtofr(o1, operand1->pszToken, NULL, getBase(), MPFR_RNDA);
-
-    mpfr_init2(o2, basePrecision);
-    mpfr_strtofr(o2, operand2->pszToken, NULL, getBase(), MPFR_RNDA);
-
-    mpfr_init2(r, basePrecision);
-
-    switch (operation->type) {
-        case token_operator_plus:
-            mpfr_add(r, o1, o2, MPFR_RNDA);
+    switch (operator.ID) {
+        case operator_plus:
+            mpfr_add(result->value, operand1->value, operand2->value, MPFR_RNDA);
             break;
 
-        case token_operator_minus:
-            mpfr_sub(r, o1, o2, MPFR_RNDA);
+        case operator_minus:
+            mpfr_sub(result->value, operand1->value, operand2->value, MPFR_RNDA);
             break;
 
-        case token_operator_multiply:
-            mpfr_mul(r, o1, o2, MPFR_RNDA);
+        case operator_multiply:
+            mpfr_mul(result->value, operand1->value, operand2->value, MPFR_RNDA);
             break;
 
-        case token_operator_divide:
-            mpfr_div(r, o1, o2, MPFR_RNDA);
+        case operator_divide:
+            mpfr_div(result->value, operand1->value, operand2->value, MPFR_RNDA);
             break;
 
-        case token_operator_mod:
-            mpfr_remainder(r, o1, o2, MPFR_RNDA);
+        case operator_mod:
+            mpfr_remainder(result->value, operand1->value, operand2->value, MPFR_RNDA);
             break;
 
-        case token_operator_power:
-            mpfr_pow(r, o1, o2, MPFR_RNDA);
+        case operator_power:
+            mpfr_pow(result->value, operand1->value, operand2->value, MPFR_RNDA);
             break;
 
-        case token_operator_root:
-            mpfr_rootn_ui(r, o1, mpfr_get_ui(o2, MPFR_RNDA), MPFR_RNDA);
+        case operator_root:
+            mpfr_rootn_ui(result->value, operand1->value, mpfr_get_ui(operand2->value, MPFR_RNDA), MPFR_RNDA);
             break;
 
-        case token_operator_AND:
-            ui = mpfr_get_ui(o1, MPFR_RNDA) & mpfr_get_ui(o2, MPFR_RNDA);
+        case operator_AND:
+            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) & mpfr_get_ui(operand2->value, MPFR_RNDA);
             lgLogStatus("Got UI result %LU for operator '&'", ui);
-            mpfr_set_ui(r, ui, MPFR_RNDA);
+            mpfr_set_ui(result->value, ui, MPFR_RNDA);
             break;
 
-        case token_operator_OR:
-            ui = mpfr_get_ui(o1, MPFR_RNDA) | mpfr_get_ui(o2, MPFR_RNDA);
+        case operator_OR:
+            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) | mpfr_get_ui(operand2->value, MPFR_RNDA);
             lgLogStatus("Got UI result %LU for operator '|'", ui);
-            mpfr_set_ui(r, ui, MPFR_RNDA);
+            mpfr_set_ui(result->value, ui, MPFR_RNDA);
             break;
 
-        case token_operator_XOR:
-            ui = mpfr_get_ui(o1, MPFR_RNDA) ^ mpfr_get_ui(o2, MPFR_RNDA);
+        case operator_XOR:
+            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) ^ mpfr_get_ui(operand2->value, MPFR_RNDA);
             lgLogStatus("Got UI result %LU for operator '^'", ui);
-            mpfr_set_ui(r, ui, MPFR_RNDA);
+            mpfr_set_ui(result->value, ui, MPFR_RNDA);
             break;
 
-        case token_operator_left_shift:
-            ui = mpfr_get_ui(o1, MPFR_RNDA) << mpfr_get_ui(o2, MPFR_RNDA);
+        case operator_left_shift:
+            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) << mpfr_get_ui(operand2->value, MPFR_RNDA);
             lgLogStatus("Got UI result %LU for operator '<<'", ui);
-            mpfr_set_ui(r, ui, MPFR_RNDA);
+            mpfr_set_ui(result->value, ui, MPFR_RNDA);
             break;
 
-        case token_operator_right_shift:
-            ui = mpfr_get_ui(o1, MPFR_RNDA) >> mpfr_get_ui(o2, MPFR_RNDA);
+        case operator_right_shift:
+            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) >> mpfr_get_ui(operand2->value, MPFR_RNDA);
             lgLogStatus("Got UI result %LU for operator '>>'", ui);
-            mpfr_set_ui(r, ui, MPFR_RNDA);
+            mpfr_set_ui(result->value, ui, MPFR_RNDA);
             break;
 
         default:
             return ERROR_EVALUATE_UNRECOGNISED_OPERATOR;
     }
-
-    if (getBase() == DECIMAL) {
-        sprintf(szFormatStr, "%%.%ldRf", (long)getPrecision());
-        mpfr_sprintf(pszResult, szFormatStr, r);
-    }
-    else {
-        mpz_init(integer_r);
-        mpfr_get_z(integer_r, r, MPFR_RNDA);
-        sprintf(pszResult, "%s", mpz_get_str(NULL, getBase(), integer_r));
-    }
-
-    result->pszToken = pszResult;
-    result->length = strlen(pszResult);
-    result->type = token_operand;
-
-    stackPush(result);
     
     return EVALUATE_OK;
 }
 
-static int evaluateFunction(token_t * result, token_t * function, token_t * operand) {
-    mpfr_t          o1;
-    mpfr_t          r;
-    char            pszResult[80];
-    char            szFormatStr[32];
+static int evaluateFunction(operand_t * result, function_t function, operand_t * operand) {
+    mpfr_init2(result->value, getBasePrecision());
 
-    lgLogInfo("Got function: '%s'", function->pszToken);
-    lgLogInfo("Got operand: '%s'", operand->pszToken);
-
-    mpfr_init2(o1, basePrecision);
-    mpfr_strtofr(o1, operand->pszToken, NULL, getBase(), MPFR_RNDA);
-
-    mpfr_init2(r, basePrecision);
-
-    switch (function->type) {
-        case token_function_sin:
+    switch (function.ID) {
+        case function_sin:
             if (getTrigMode() == degrees) {
-                mpfr_sinu(r, o1, 360U, MPFR_RNDA);
+                mpfr_sinu(result->value, operand->value, 360U, MPFR_RNDA);
             }
             else {
-                mpfr_sin(r, o1, MPFR_RNDA);
+                mpfr_sin(result->value, operand->value, MPFR_RNDA);
             }
             break;
 
-        case token_function_cos:
+        case function_cos:
             if (getTrigMode() == degrees) {
-                mpfr_cosu(r, o1, 360U, MPFR_RNDA);
+                mpfr_cosu(result->value, operand->value, 360U, MPFR_RNDA);
             }
             else {
-                mpfr_cos(r, o1, MPFR_RNDA);
+                mpfr_cos(result->value, operand->value, MPFR_RNDA);
             }
             break;
 
-        case token_function_tan:
+        case function_tan:
             if (getTrigMode() == degrees) {
-                mpfr_tanu(r, o1, 360U, MPFR_RNDA);
+                mpfr_tanu(result->value, operand->value, 360U, MPFR_RNDA);
             }
             else {
-                mpfr_tan(r, o1, MPFR_RNDA);
+                mpfr_tan(result->value, operand->value, MPFR_RNDA);
             }
             break;
 
-        case token_function_asin:
+        case function_asin:
             if (getTrigMode() == degrees) {
-                mpfr_asinu(r, o1, 360U, MPFR_RNDA);
+                mpfr_asinu(result->value, operand->value, 360U, MPFR_RNDA);
             }
             else {
-                mpfr_asin(r, o1, MPFR_RNDA);
+                mpfr_asin(result->value, operand->value, MPFR_RNDA);
             }
             break;
 
-        case token_function_acos:
+        case function_acos:
             if (getTrigMode() == degrees) {
-                mpfr_acosu(r, o1, 360U, MPFR_RNDA);
+                mpfr_acosu(result->value, operand->value, 360U, MPFR_RNDA);
             }
             else {
-                mpfr_acos(r, o1, MPFR_RNDA);
+                mpfr_acos(result->value, operand->value, MPFR_RNDA);
             }
             break;
 
-        case token_function_atan:
+        case function_atan:
             if (getTrigMode() == degrees) {
-                mpfr_atanu(r, o1, 360U, MPFR_RNDA);
+                mpfr_atanu(result->value, operand->value, 360U, MPFR_RNDA);
             }
             else {
-                mpfr_atan(r, o1, MPFR_RNDA);
+                mpfr_atan(result->value, operand->value, MPFR_RNDA);
             }
             break;
 
-        case token_function_sinh:
-            mpfr_sinh(r, o1, MPFR_RNDA);
+        case function_sinh:
+            mpfr_sinh(result->value, operand->value, MPFR_RNDA);
             break;
 
-        case token_function_cosh:
-            mpfr_cosh(r, o1, MPFR_RNDA);
-            break;
-            break;
-
-        case token_function_tanh:
-            mpfr_tanh(r, o1, MPFR_RNDA);
+        case function_cosh:
+            mpfr_cosh(result->value, operand->value, MPFR_RNDA);
             break;
             break;
 
-        case token_function_asinh:
-            mpfr_asinh(r, o1, MPFR_RNDA);
+        case function_tanh:
+            mpfr_tanh(result->value, operand->value, MPFR_RNDA);
             break;
             break;
 
-        case token_function_acosh:
-            mpfr_acosh(r, o1, MPFR_RNDA);
+        case function_asinh:
+            mpfr_asinh(result->value, operand->value, MPFR_RNDA);
             break;
             break;
 
-        case token_function_atanh:
-            mpfr_atanh(r, o1, MPFR_RNDA);
+        case function_acosh:
+            mpfr_acosh(result->value, operand->value, MPFR_RNDA);
             break;
             break;
 
-        case token_function_sqrt:
-            mpfr_sqrt(r, o1, MPFR_RNDA);
+        case function_atanh:
+            mpfr_atanh(result->value, operand->value, MPFR_RNDA);
+            break;
             break;
 
-        case token_function_log:
-            mpfr_log10(r, o1, MPFR_RNDA);
+        case function_sqrt:
+            mpfr_sqrt(result->value, operand->value, MPFR_RNDA);
             break;
 
-        case token_function_ln:
-            mpfr_log(r, o1, MPFR_RNDA);
+        case function_log:
+            mpfr_log10(result->value, operand->value, MPFR_RNDA);
             break;
 
-        case token_function_fac:
-            mpfr_fac_ui(r, mpfr_get_si(o1, MPFR_RNDA), MPFR_RNDA);
+        case function_ln:
+            mpfr_log(result->value, operand->value, MPFR_RNDA);
             break;
 
-        case token_function_mem:
+        case function_fac:
+            mpfr_fac_ui(result->value, mpfr_get_si(operand->value, MPFR_RNDA), MPFR_RNDA);
+            break;
+
+        case function_mem:
             mpfr_strtofr(
-                    r, 
-                    memoryFetch((int)mpfr_get_si(o1, MPFR_RNDA))->pszToken, 
+                    result->value, 
+                    memoryFetch((int)mpfr_get_si(operand->value, MPFR_RNDA))->pszToken, 
                     NULL, 
                     getBase(), 
                     MPFR_RNDA);
@@ -507,32 +432,20 @@ static int evaluateFunction(token_t * result, token_t * function, token_t * oper
             return ERROR_EVALUATE_UNRECOGNISED_FUNCTION;
     }
 
-    sprintf(szFormatStr, "%%.%ldRf", (long)getPrecision());
-
-    mpfr_sprintf(pszResult, szFormatStr, r);
-    result->pszToken = pszResult;
-    result->length = strlen(pszResult);
-    result->type = token_operand;
-
-    stackPush(result);
-
     return EVALUATE_OK;
 }
 
-int memoryStore(token_t * t, int memoryLocation) {
+int memoryStore(operand_t * operand, int memoryLocation) {
     if (memoryLocation < 0 || memoryLocation > 9) {
         return -1;
     }
 
-    memory[memoryLocation].pszToken = strndup(t->pszToken, t->length);
-
-    memory[memoryLocation].length = t->length;
-    memory[memoryLocation].type = token_operand;
+    memcpy(&memory[memoryLocation], operand, sizeof(operand_t));
 
     return EVALUATE_OK;
 }
 
-token_t * memoryFetch(int memoryLocation) {
+operand_t * memoryFetch(int memoryLocation) {
     if (memoryLocation < 0 || memoryLocation > 9) {
         return NULL;
     }
@@ -625,7 +538,7 @@ int evaluate(const char * pszExpression, token_t * result) {
 
             token_t result;
 
-            evaluateOperation(&result, t, o1, o2);
+            evaluateOperation(&result, t, operand->value, o2);
 
             if (error) {
                 lgLogError("evaluateOperation returned %d\n", error);

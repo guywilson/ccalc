@@ -9,9 +9,9 @@
 
 #include "utils.h"
 
-static mpfr_prec_t  _precision;
-static int          _base;
-static trig_mode_t  _mode;
+static mpfr_prec_t          _precision;
+static int                  _base;
+static trig_mode_t          _mode;
 
 void setBase(int b) {
     _base = b;
