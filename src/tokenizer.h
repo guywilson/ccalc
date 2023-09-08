@@ -1,18 +1,11 @@
 #include <gmp.h>
 #include <mpfr.h>
 
+#include "token.h"
+
 #ifndef __INCL_TOKENIZER
 #define __INCL_TOKENIZER
 
-#define BASE_10                 10
-#define BASE_16                 16
-#define BASE_8                   8
-#define BASE_2                   2
-
-#define DECIMAL                 BASE_10
-#define HEXADECIMAL             BASE_16
-#define OCTAL                   BASE_8
-#define BINARY                  BASE_2
 
 typedef enum {
     token_operator,
@@ -89,51 +82,6 @@ typedef struct {
     char *      pszExpression;
 }
 tokenizer_t;
-
-typedef struct {
-    operator_id_t           ID;
-
-    int                     prescedence;
-    associativity           associativity;
-}
-operator_t;
-
-typedef struct {
-    function_id_t           ID;
-}
-function_t;
-
-typedef struct {
-    mpfr_t                  value;
-    int                     base;
-}
-operand_t;
-
-typedef struct {
-    constant_id_t           ID;
-}
-constant_t;
-
-typedef struct {
-    brace_id_t              ID;
-}
-brace_t;
-
-typedef union {
-    operand_t               operand;
-    operator_t              operator;
-    function_t              function;
-    constant_t              constant;
-    brace_t                 brace;
-}
-item_t;
-
-typedef struct {
-    token_type_t            type;
-
-    item_t                  item;
-}
-token_t;
 
 bool            isOperand(tokenizer_t * t, char * pszToken);
 bool            isBrace(char * pszToken);
