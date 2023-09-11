@@ -1,5 +1,7 @@
 #include <string>
 #include <cstring>
+#include <queue>
+#include <stack>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,62 +24,10 @@ using namespace std;
 #define CONSTANT_C            299792458U
 #define CONSTANT_G                  "0.000000000066743"
 
-static token_t                      tokenStack[STACK_SIZE];
-static token_t                      tokenQueue[LIST_SIZE];
-
-static int                          stackPointer = 0;
-static int                          queueHead = 0;
-static int                          queueTail = 0;
-static int                          queueSize = 0;
+static stack<token_t *>             tokenStack;
+static queue<token_t *>             tokenQueue;
 
 static operand_t                    memory[10];
-
-static void stackInit(void) {
-    stackPointer = 0;
-}
-
-static void stackPush(token_t & token) {
-    tokenStack[stackPointer++] = token;
-}
-
-static token_t & stackPop(void) {
-    if (stackPointer > 0) {
-        stackPointer--;
-        return tokenStack[stackPointer];
-    }
-    else {
-        return NULL;
-    }
-}
-
-static token_t & stackPeek(void) {
-    return tokenStack[stackPointer - 1];
-}
-
-static void queueInit(void) {
-    queueHead = 0;
-    queueTail = 0;
-    queueSize = 0;
-}
-
-static void queuePut(token_t & token) {
-    tokenQueue[queueTail++] = token;
-    queueSize++;
-}
-
-static token_t & queueGet(void) {
-    if (queueSize > 0) {
-        queueSize--;
-        return tokenQueue[queueHead++];
-    }
-    else {
-        return NULL;
-    }
-}
-
-static int getQueueSize(void) {
-    return queueSize;
-}
 
 static void inline freeToken(token_t * t) {
     delete t;
@@ -90,17 +40,17 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         /*
         ** If the token is a number, then push it to the output queue.
         */
-        if (t->type == token_operand) {
-            queuePut(t);
+        if (t->getType() == token_operand) {
+            tokenQueue.push(t);
         }
-        else if (t->type == token_constant) {
-            queuePut(t);
+        else if (t->getType() == token_constant) {
+            tokenQueue.push(t);
         }
         /*
         ** If the token is a function token, then push it onto the stack.
         */
-        else if (t->type == token_function) {
-            stackPush(t);
+        else if (t->getType() == token_function) {
+            tokenStack.push(t);
         }
         /*
         ** If the token is an operator, operand->value, then:
@@ -112,25 +62,26 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         **	pop o2 off the operator stack, onto the output queue;
         **	at the end of iteration push o1 onto the operator stack.
         */
-        else if (t->type == token_operator) {
-            operator_t op = t->item.operator;
-
-            while (stackPointer > 0) {
+        else if (t->getType() == token_operator) {
+            while (!tokenStack.empty()) {
+                operator_t * op;
                 token_t * topToken;
     
-                topToken = stackPeek();
+                topToken = tokenStack.top();
 
-                if (topToken->type != token_operator && topToken->type != token_function) {
+                if (topToken->getType() != token_operator && topToken->getType() != token_function) {
                     break;
                 }
                 else {
-                    if ((op.associativity == associativity_left && op.prescedence <= topToken->item.operator.prescedence) ||
-                        (getOperatorAssociativity(t) == associativity_right && getOperatorPrecedence(t) < getOperatorPrecedence(topToken)))
+                    operator_t * topOp = (operator_t *)topToken;
+
+                    if ((op->getAssociativity() == operator_t::left && op->getPrescedence() <= topOp->getPrescedence()) ||
+                        (op->getAssociativity() == operator_t::right && op->getPrescedence() < topOp->getPrescedence()))
                     {
                         token_t * op2;
 
-                        op2 = stackPop();
-                        queuePut(op2);
+                        op2 = tokenStack.pop();
+                        tokenQueue.push(op2);
                     }
                     else {
                         break;
@@ -138,14 +89,16 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                 }
             }
 
-            stackPush(t);
+            tokenStack.push(t);
         }
-        else if (t->type == token_brace) {
+        else if (t->getType() == token_brace) {
+            brace_t * brace = (brace_t *)t;
+
             /*
             ** If the token is a left parenthesis (i.e. "("), then push it onto the stack.
             */
-            if (isBraceLeft(t)) {
-                stackPush(t);
+            if (brace->isBraceLeft()) {
+                tokenStack.push(t);
             }
             else {
                 /*
@@ -160,16 +113,24 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                 */
                 bool foundLeftParenthesis = false;
 
-                while (stackPointer > 0 && !foundLeftParenthesis) {
+                while (!tokenStack.empty() && !foundLeftParenthesis) {
                     token_t * stackToken;
 
-                    stackToken = stackPop();
+                    stackToken = tokenStack.top();
+                    tokenStack.pop();
 
-                    if (isBraceLeft(stackToken)) {
-                        foundLeftParenthesis = true;
+                    if (stackToken->getType() == token_brace) {
+                        brace_t * b = (brace_t *)stackToken;
+
+                        if (b->isBraceLeft()) {
+                            foundLeftParenthesis = true;
+                        }
+                        else {
+                            tokenQueue.push(t);
+                        }
                     }
                     else {
-                        queuePut(stackToken);
+                        tokenQueue.push(t);
                     }
                 }
 
@@ -181,11 +142,9 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                 }
             }
         }
-
-        freeToken(t);
     }
 
-    lgLogDebug("Num items in stack %d", stackPointer);
+    lgLogDebug("Num items in stack %d", (int)tokenStack.size());
 
     /*
         While there are still operator tokens in the stack:
@@ -193,243 +152,26 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         then there are mismatched parentheses.
         Pop the operator onto the output queue.
     */
-    while (stackPointer > 0) {
+    while (!tokenStack.empty()) {
         token_t * stackToken;
 
-        stackToken = stackPop();
+        stackToken = tokenStack.top();
+        tokenStack.pop();
 
         if (stackToken == NULL) {
             lgLogError("NULL item on stack");
             return ERROR_RPN_NULL_STACK_POP;
         }
 
-        if (isBrace(stackToken)) {
+        if (stackToken->getType() == token_brace) {
             /*
             ** If we've got here, we must have unmatched parenthesis...
             */
             return ERROR_RPN_UNMATCHED_PARENTHESIS_ON_STACK;
         }
         else {
-            queuePut(stackToken);
+            tokenQueue.push(stackToken);
         }
-    }
-
-    return EVALUATE_OK;
-}
-
-static int evaluateConstant(operand_t * result, constant_t constant) {
-    mpfr_init2(result->value, getBasePrecision());
-
-    switch (constant.ID) {
-        case constant_pi:
-            mpfr_const_pi(result->value, MPFR_RNDA);
-            break;
-
-        case constant_c:
-            mpfr_set_ui(result->value, CONSTANT_C, MPFR_RNDA);
-            break;
-
-        case constant_euler:
-            mpfr_const_euler(result->value, MPFR_RNDA);
-            break;
-
-        case constant_gravity:
-            mpfr_strtofr(result->value, CONSTANT_G, NULL, getBase(), MPFR_RNDA);
-            break;
-
-        default:
-            return ERROR_EVALUATE_UNRECOGNISED_CONSTANT;
-    }
-
-    return EVALUATE_OK;
-}
-
-static int evaluateOperation(operand_t * result, operator_t operator, operand_t * operand1, operand_t * operand2) {
-    mpz_t           integer_r;
-    unsigned long   ui;
-
-    mpfr_init2(result->value, getBasePrecision());
-
-    switch (operator.ID) {
-        case operator_plus:
-            mpfr_add(result->value, operand1->value, operand2->value, MPFR_RNDA);
-            break;
-
-        case operator_minus:
-            mpfr_sub(result->value, operand1->value, operand2->value, MPFR_RNDA);
-            break;
-
-        case operator_multiply:
-            mpfr_mul(result->value, operand1->value, operand2->value, MPFR_RNDA);
-            break;
-
-        case operator_divide:
-            mpfr_div(result->value, operand1->value, operand2->value, MPFR_RNDA);
-            break;
-
-        case operator_mod:
-            mpfr_remainder(result->value, operand1->value, operand2->value, MPFR_RNDA);
-            break;
-
-        case operator_power:
-            mpfr_pow(result->value, operand1->value, operand2->value, MPFR_RNDA);
-            break;
-
-        case operator_root:
-            mpfr_rootn_ui(result->value, operand1->value, mpfr_get_ui(operand2->value, MPFR_RNDA), MPFR_RNDA);
-            break;
-
-        case operator_AND:
-            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) & mpfr_get_ui(operand2->value, MPFR_RNDA);
-            lgLogStatus("Got UI result %LU for operator '&'", ui);
-            mpfr_set_ui(result->value, ui, MPFR_RNDA);
-            break;
-
-        case operator_OR:
-            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) | mpfr_get_ui(operand2->value, MPFR_RNDA);
-            lgLogStatus("Got UI result %LU for operator '|'", ui);
-            mpfr_set_ui(result->value, ui, MPFR_RNDA);
-            break;
-
-        case operator_XOR:
-            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) ^ mpfr_get_ui(operand2->value, MPFR_RNDA);
-            lgLogStatus("Got UI result %LU for operator '^'", ui);
-            mpfr_set_ui(result->value, ui, MPFR_RNDA);
-            break;
-
-        case operator_left_shift:
-            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) << mpfr_get_ui(operand2->value, MPFR_RNDA);
-            lgLogStatus("Got UI result %LU for operator '<<'", ui);
-            mpfr_set_ui(result->value, ui, MPFR_RNDA);
-            break;
-
-        case operator_right_shift:
-            ui = mpfr_get_ui(operand1->value, MPFR_RNDA) >> mpfr_get_ui(operand2->value, MPFR_RNDA);
-            lgLogStatus("Got UI result %LU for operator '>>'", ui);
-            mpfr_set_ui(result->value, ui, MPFR_RNDA);
-            break;
-
-        default:
-            return ERROR_EVALUATE_UNRECOGNISED_OPERATOR;
-    }
-    
-    return EVALUATE_OK;
-}
-
-static int evaluateFunction(operand_t * result, function_t function, operand_t * operand) {
-    mpfr_init2(result->value, getBasePrecision());
-
-    switch (function.ID) {
-        case function_sin:
-            if (getTrigMode() == degrees) {
-                mpfr_sinu(result->value, operand->value, 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_sin(result->value, operand->value, MPFR_RNDA);
-            }
-            break;
-
-        case function_cos:
-            if (getTrigMode() == degrees) {
-                mpfr_cosu(result->value, operand->value, 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_cos(result->value, operand->value, MPFR_RNDA);
-            }
-            break;
-
-        case function_tan:
-            if (getTrigMode() == degrees) {
-                mpfr_tanu(result->value, operand->value, 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_tan(result->value, operand->value, MPFR_RNDA);
-            }
-            break;
-
-        case function_asin:
-            if (getTrigMode() == degrees) {
-                mpfr_asinu(result->value, operand->value, 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_asin(result->value, operand->value, MPFR_RNDA);
-            }
-            break;
-
-        case function_acos:
-            if (getTrigMode() == degrees) {
-                mpfr_acosu(result->value, operand->value, 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_acos(result->value, operand->value, MPFR_RNDA);
-            }
-            break;
-
-        case function_atan:
-            if (getTrigMode() == degrees) {
-                mpfr_atanu(result->value, operand->value, 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_atan(result->value, operand->value, MPFR_RNDA);
-            }
-            break;
-
-        case function_sinh:
-            mpfr_sinh(result->value, operand->value, MPFR_RNDA);
-            break;
-
-        case function_cosh:
-            mpfr_cosh(result->value, operand->value, MPFR_RNDA);
-            break;
-            break;
-
-        case function_tanh:
-            mpfr_tanh(result->value, operand->value, MPFR_RNDA);
-            break;
-            break;
-
-        case function_asinh:
-            mpfr_asinh(result->value, operand->value, MPFR_RNDA);
-            break;
-            break;
-
-        case function_acosh:
-            mpfr_acosh(result->value, operand->value, MPFR_RNDA);
-            break;
-            break;
-
-        case function_atanh:
-            mpfr_atanh(result->value, operand->value, MPFR_RNDA);
-            break;
-            break;
-
-        case function_sqrt:
-            mpfr_sqrt(result->value, operand->value, MPFR_RNDA);
-            break;
-
-        case function_log:
-            mpfr_log10(result->value, operand->value, MPFR_RNDA);
-            break;
-
-        case function_ln:
-            mpfr_log(result->value, operand->value, MPFR_RNDA);
-            break;
-
-        case function_fac:
-            mpfr_fac_ui(result->value, mpfr_get_si(operand->value, MPFR_RNDA), MPFR_RNDA);
-            break;
-
-        case function_mem:
-            mpfr_strtofr(
-                    result->value, 
-                    memoryFetch((int)mpfr_get_si(operand->value, MPFR_RNDA))->pszToken, 
-                    NULL, 
-                    getBase(), 
-                    MPFR_RNDA);
-            break;
-
-        default:
-            return ERROR_EVALUATE_UNRECOGNISED_FUNCTION;
     }
 
     return EVALUATE_OK;
@@ -453,14 +195,11 @@ operand_t * memoryFetch(int memoryLocation) {
     return &memory[memoryLocation];
 }
 
-int evaluate(const char * pszExpression, token_t * result) {
+int evaluate(const char * pszExpression, operand_t * result) {
     tokenizer_t             tokenizer;
     int                     error = 0;
 
     tzrInit(&tokenizer, pszExpression, getBase());
-
-    queueInit();
-    stackInit();
 
     /*
     ** Convert the calculation in infix notation to the postfix notation
@@ -473,80 +212,74 @@ int evaluate(const char * pszExpression, token_t * result) {
         return error;
     }
 
-    stackInit();
+    lgLogDebug("num items in queue = %d", tokenQueue.size());
 
-    lgLogDebug("num items in queue = %d", getQueueSize());
+    while (!tokenQueue.empty()) {
+        token_t * t;
 
-    while (getQueueSize()) {
-        token_t *       t;
+        t = tokenQueue.front();
+        tokenQueue.pop();
 
-        t = queueGet();
-
-        if (isOperand(&tokenizer, t)) {
-            lgLogDebug("Got operand: '%s'", t->pszToken);
-            stackPush(t);
+        if (t->getType() == token_operand) {
+            lgLogDebug("Got operand: '%s'", t->getTokenStr().c_str());
+            tokenStack.push(t);
         }
-        else if (isConstant(t)) {
-            lgLogDebug("Got constant: '%s'", t->pszToken);
+        else if (t->getType() == token_constant) {
+            lgLogDebug("Got constant: '%s'", t->getTokenStr().c_str());
 
-            token_t result;
+            constant_t * c = (constant_t *)t;
 
-            error = evaluateConstant(&result, t);
+            operand_t * result = c->evaluate();
 
-            if (error) {
-                lgLogError("evaluateContant returned %d\n", error);
-                return error;
-            }
+            tokenStack.push(result);
         }
         /*
         ** Must be Operator or Function...
         */
-        else if (isFunction(t)) {
-            token_t *       o1;
+        else if (t->getType() == token_function) {
+            operand_t * o1;
 
-            o1 = stackPop();
+            o1 = (operand_t *)tokenStack.top();
+            tokenStack.pop();
 
             if (o1 == NULL) {
-                lgLogError("NULL operand for function '%s'", t->pszToken);
-                free(t->pszToken);
+                lgLogError("NULL operand for function '%s'", t->getTokenStr().c_str());
+                delete t;
                 tzrFinish(&tokenizer);
                 return ERROR_EVALUATE_NULL_STACK_POP;
             }
 
-            token_t result;
+            function_t * f = (function_t *)t;
 
-            error = evaluateFunction(&result, t, o1);
+            operand_t * result = f->evaluate(o1);
 
-            if (error) {
-                lgLogError("evaluateFunction returned %d\n", error);
-                return error;
-            }
+            tokenStack.push(result);
         }
-        else if (isOperator(t)) {
-            token_t *       o1;
-            token_t *       o2;
+        else if (t->getType() == token_operator) {
+            operand_t * o1;
+            operand_t * o2;
 
-            o2 = stackPop();
-            o1 = stackPop();
+            o2 = (operand_t *)tokenStack.top();
+            tokenStack.pop();
+
+            o1 = (operand_t *)tokenStack.top();
+            tokenStack.pop();
 
             if (o1 == NULL || o2 == NULL) {
-                lgLogError("NULL operand for operator '%s'", t->pszToken);
-                free(t->pszToken);
+                lgLogError("NULL operand for operator '%s'", t->getTokenStr().c_str());
+                delete t;
                 tzrFinish(&tokenizer);
                 return ERROR_EVALUATE_NULL_STACK_POP;
             }
 
-            token_t result;
+            operator_t * op = (operator_t *)t;
 
-            evaluateOperation(&result, t, operand->value, o2);
+            operand_t * result = op->evaluate(o1, o2);
 
-            if (error) {
-                lgLogError("evaluateOperation returned %d\n", error);
-                return error;
-            }
+            tokenStack.push(result);
         }
 
-        free(t->pszToken);
+        delete t;
     }
 
     /*
@@ -554,16 +287,17 @@ int evaluate(const char * pszExpression, token_t * result) {
     ** it is the result of the calculation. Otherwise, we
     ** have too many tokens and therefore an error...
     */
-    if (stackPointer == 1) {
-        token_t * r = stackPop();
-        memcpy(result, r, sizeof(token_t));
+    if (tokenStack.size() == 1) {
+        result = (operand_t *)tokenStack.top();
+        tokenStack.pop();
     }
     else {
         lgLogError("evaluate(): Got invalid items on stack!");
 
-        while (stackPointer > 0) {
-            token_t * tok = stackPop();
-            lgLogError("Invalid item on stack '%s'\n", tok->pszToken);
+        while (!tokenStack.empty()) {
+            token_t * tok = tokenStack.top();
+            tokenStack.pop();
+            lgLogError("Invalid item on stack '%s'\n", tok->getTokenStr().c_str());
         }
 
         tzrFinish(&tokenizer);

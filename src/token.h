@@ -24,6 +24,15 @@ using namespace std;
 #define OCTAL                   BASE_8
 #define BINARY                  BASE_2
 
+typedef enum {
+    token_operator,
+    token_function,
+    token_constant,
+    token_brace,
+    token_operand
+}
+token_type_t;
+
 /*
 ** Declare base classes...
 */
@@ -49,6 +58,8 @@ class _evaluatable_t {
 
 class token_t {
     private:
+        token_type_t    type;
+        
         string  tokenString;
         int     length;
 
@@ -61,15 +72,23 @@ class token_t {
     protected:
         token_t();
 
-        string & getTokenStr() {
-            return tokenString;
-        }
-
         int getLength() {
             return length;
         }
 
+        void setType(token_type_t t) {
+            type = t;
+        }
+
     public:
+        token_type_t getType() {
+            return type;
+        }
+
+        string & getTokenStr() {
+            return tokenString;
+        }
+
         void setTokenStr(string & s) {
             tokenString.assign(s);
             length = (int)s.length();
@@ -97,18 +116,37 @@ class brace_t : public token_t {
     public:
         brace_t(string & s) : token_t(s) {}
         brace_t(const char * s) : token_t(s) {}
+
+        virtual bool isBraceLeft() = 0;
+        virtual bool isBraceRight() = 0;
 };
 
 class brace_left_t : public brace_t {
     public:
         brace_left_t(string & s) : brace_t(s) {}
         brace_left_t(const char * s) : brace_t(s) {}
+
+        bool isBraceLeft() {
+            return true;
+        }
+
+        bool isBraceRight() {
+            return false;
+        }
 };
 
 class brace_right_t : public brace_t {
     public:
         brace_right_t(string & s) : brace_t(s) {}
         brace_right_t(const char * s) : brace_t(s) {}
+
+        bool isBraceLeft() {
+            return false;
+        }
+
+        bool isBraceRight() {
+            return true;
+        }
 };
 
 class operand_t : public token_t {
@@ -138,22 +176,27 @@ class operand_t : public token_t {
     public:
         operand_t(const char * s) : token_t(s) {
             setValue(s);
+            setType(token_operand);
         }
 
         operand_t(string & s) : token_t(s) {
             setValue(s.c_str());
+            setType(token_operand);
         }
 
         operand_t(mpfr_ptr v) {
             setValue(v);
+            setType(token_operand);
         }
 
         operand_t(operand_t & o) {
             setValue(o.getValue());
+            setType(token_operand);
         }
 
         operand_t() {
             mpfr_init2(value, getBasePrecision());
+            setType(token_operand);
         }
 
         mpfr_ptr getValue() {
@@ -163,8 +206,28 @@ class operand_t : public token_t {
 
 class operator_t : public token_t, _evaluatable_t {
     public:
-        operator_t(string & s) : token_t(s) {}
-        operator_t(const char * s) : token_t(s) {}
+        enum associativity {
+            left,
+            right
+        };
+
+        operator_t(string & s) : token_t(s) {
+            setType(token_operator);
+        }
+        operator_t(const char * s) : token_t(s) {
+            setType(token_operator);
+        }
+
+        virtual associativity getAssociativity() {
+            return left;
+        }
+        virtual int getPrescedence() {
+            return 0;
+        }
+
+        virtual operand_t * evaluate(operand_t * o1, operand_t * o2) {
+            return NULL;
+        }
 };
 
 class operator_plus_t : public operator_t {
@@ -181,6 +244,14 @@ class operator_plus_t : public operator_t {
             operand_t * result = new operand_t(r);
 
             return result;
+        }
+
+        associativity getAssociativity() {
+            return left;
+        }
+
+        int getPrescedence() {
+            return 2;
         }
 };
 
@@ -199,6 +270,14 @@ class operator_minus_t : public operator_t {
 
             return result;
         }
+
+        associativity getAssociativity() {
+            return left;
+        }
+
+        int getPrescedence() {
+            return 2;
+        }
 };
 
 class operator_multiply_t : public operator_t {
@@ -215,6 +294,14 @@ class operator_multiply_t : public operator_t {
             operand_t * result = new operand_t(r);
 
             return result;
+        }
+
+        associativity getAssociativity() {
+            return left;
+        }
+
+        int getPrescedence() {
+            return 3;
         }
 };
 
@@ -233,6 +320,14 @@ class operator_divide_t : public operator_t {
 
             return result;
         }
+
+        associativity getAssociativity() {
+            return left;
+        }
+
+        int getPrescedence() {
+            return 3;
+        }
 };
 
 class operator_modulus_t : public operator_t {
@@ -249,6 +344,14 @@ class operator_modulus_t : public operator_t {
             operand_t * result = new operand_t(r);
 
             return result;
+        }
+
+        associativity getAssociativity() {
+            return left;
+        }
+
+        int getPrescedence() {
+            return 3;
         }
 };
 
@@ -267,6 +370,14 @@ class operator_power_t : public operator_t {
 
             return result;
         }
+
+        associativity getAssociativity() {
+            return right;
+        }
+
+        int getPrescedence() {
+            return 4;
+        }
 };
 
 class operator_root_t : public operator_t {
@@ -283,6 +394,14 @@ class operator_root_t : public operator_t {
             operand_t * result = new operand_t(r);
 
             return result;
+        }
+
+        associativity getAssociativity() {
+            return left;
+        }
+
+        int getPrescedence() {
+            return 4;
         }
 };
 
@@ -305,6 +424,14 @@ class operator_AND_t : public operator_t {
 
             return result;
         }
+
+        associativity getAssociativity() {
+            return left;
+        }
+
+        int getPrescedence() {
+            return 4;
+        }
 };
 
 class operator_OR_t : public operator_t {
@@ -325,6 +452,14 @@ class operator_OR_t : public operator_t {
             operand_t * result = new operand_t(r);
 
             return result;
+        }
+
+        associativity getAssociativity() {
+            return left;
+        }
+
+        int getPrescedence() {
+            return 4;
         }
 };
 
@@ -347,6 +482,14 @@ class operator_XOR_t : public operator_t {
 
             return result;
         }
+
+        associativity getAssociativity() {
+            return left;
+        }
+
+        int getPrescedence() {
+            return 4;
+        }
 };
 
 class operator_LSHIFT_t : public operator_t {
@@ -367,6 +510,14 @@ class operator_LSHIFT_t : public operator_t {
             operand_t * result = new operand_t(r);
 
             return result;
+        }
+
+        associativity getAssociativity() {
+            return right;
+        }
+
+        int getPrescedence() {
+            return 4;
         }
 };
 
@@ -389,12 +540,32 @@ class operator_RSHIFT_t : public operator_t {
 
             return result;
         }
+
+        associativity getAssociativity() {
+            return right;
+        }
+
+        int getPrescedence() {
+            return 4;
+        }
 };
 
 class function_t : public operator_t, _evaluatable_t {
     public:
-        function_t(string & s) : operator_t(s) {}
-        function_t(const char * s) : operator_t(s) {}
+        function_t(string & s) : operator_t(s) {
+            setType(token_function);
+        }
+        function_t(const char * s) : operator_t(s) {
+            setType(token_function);
+        }
+
+        int getPrescedence() {
+            return 5;
+        }
+
+        virtual operand_t * evaluate(operand_t * o1) {
+            return NULL;
+        }
 };
 
 class function_sin_t : public function_t {
@@ -687,8 +858,16 @@ class function_memory_t : public function_t {
 
 class constant_t : public operand_t, _evaluatable_t {
     public:
-        constant_t(string & s) : operand_t(s) {}
-        constant_t(const char * s) : operand_t(s) {}
+        constant_t(string & s) : operand_t(s) {
+            setType(token_constant);
+        }
+        constant_t(const char * s) : operand_t(s) {
+            setType(token_constant);
+        }
+
+        virtual operand_t * evaluate(void) {
+            return NULL;
+        }
 };
 
 class constant_pi_t : public constant_t {
