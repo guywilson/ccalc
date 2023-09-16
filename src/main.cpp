@@ -27,6 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <readline/history.h>
 
 #include "logger.h"
+#include "calc_error.h"
 #include "tokenizer.h"
 #include "calculator.h"
 #include "timeutils.h"
@@ -148,13 +149,13 @@ static char * formatResult(token_t * result) {
     int                 digitCount = 0;
     int                 delimRangeLimit = 0;
 
+    allocateLen = result->getLength();
+
     switch (getBase()) {
         case DECIMAL:
-            allocateLen = result->length;
-
             if (allocateLen > 3) {
-                for (i = 0;i < result->length;i++) {
-                    if (result->pszToken[i] == '.') {
+                for (i = 0;i < allocateLen;i++) {
+                    if (result->getTokenStr()[i] == '.') {
                         allocateLen += (i - 1) / 3;
                         delimRangeLimit = i - 1;
                         break;
@@ -167,8 +168,6 @@ static char * formatResult(token_t * result) {
             break;
 
         case BINARY:
-            allocateLen = result->length;
-
             if (allocateLen > 8) {
                 allocateLen += ((allocateLen / 8) - 1);
             }
@@ -178,13 +177,10 @@ static char * formatResult(token_t * result) {
             break;
 
         case OCTAL:
-            allocateLen = result->length;
             delimiter = 0;
             break;
 
         case HEXADECIMAL:
-            allocateLen = result->length;
-
             if (allocateLen > 4) {
                 allocateLen += ((allocateLen / 4));
             }
@@ -199,18 +195,18 @@ static char * formatResult(token_t * result) {
 
     pszFormattedResult[allocateLen] = 0;
 
-    if (allocateLen > result->length && getBase() != OCTAL) {
+    if (allocateLen > result->getLength() && getBase() != OCTAL) {
         if (getBase() != DECIMAL) {
-            delimRangeLimit = result->length - 1;
+            delimRangeLimit = result->getLength() - 1;
         }
         
         i = allocateLen - 1;
-        j = result->length - 1;
+        j = result->getLength() - 1;
 
         digitCount = delimPos;
 
         while (j >= 0) {
-            pszFormattedResult[i] = result->pszToken[j];
+            pszFormattedResult[i] = result->getTokenStr()[j];
 
             if (j <= delimRangeLimit) {
                 digitCount--;
@@ -226,7 +222,7 @@ static char * formatResult(token_t * result) {
         }
     }
     else {
-        strncpy(pszFormattedResult, result->pszToken, result->length);
+        strncpy(pszFormattedResult, result->getTokenStr().c_str(), result->getLength());
     }
 
     return pszFormattedResult;
@@ -238,8 +234,7 @@ int main(int argc, char ** argv) {
     char                szPrompt[32];
     bool                loop = true;
     bool                doFormat = true;
-    token_t             result;
-    int                 error;
+    operand_t *         result;
 
     rl_bind_key('\t', rl_complete);
 
@@ -252,14 +247,10 @@ int main(int argc, char ** argv) {
     lgOpenStdout("LOG_LEVEL_ALL");
     lgSetLogLevel(DEFAULT_LOG_LEVEL);
 
-    result.type = token_operand;
-    result.pszToken = "0";
-    result.length = 1;
-
     printBanner();
 
     while (loop) {
-        sprintf(szPrompt, "calc [%s][%s]> ", getBaseString(), getTrigModeString());
+        snprintf(szPrompt, 32, "calc [%s][%s]> ", getBaseString(), getTrigModeString());
 
         pszCalculation = readline(szPrompt);
 
@@ -299,18 +290,21 @@ int main(int argc, char ** argv) {
             else if (strncmp(pszCalculation, "memst", 5) == 0) {
                 int m = atoi(&pszCalculation[5]);
 
-                if (memoryStore(&result, m) < 0) {
-                    fprintf(stderr, "Invalid memory location '%d' must be between 0 & 9\n", m);
+                try {
+                    memoryStore(result, m);
+                }
+                catch (calc_error & e) {
+                    fprintf(stderr, "Failed to store result in memory %d: %s\n", m, e.what());
                 }
             }
             else if (strncmp(pszCalculation, "dec", 3) == 0) {
                 setBase(DECIMAL);
-                printf("= %s\n", result.pszToken);
+                printf("= %s\n", result->getTokenStr().c_str());
             }
             else if (strncmp(pszCalculation, "hex", 3) == 0) {
                 setBase(HEXADECIMAL);
                 setTrigMode(degrees);
-                printf("= 0x%08X\n", (unsigned int)strtoul(result.pszToken, NULL, DECIMAL));
+                printf("= 0x%08X\n", (unsigned int)strtoul(result->getTokenStr().c_str(), NULL, DECIMAL));
             }
             else if (strncmp(pszCalculation, "bin", 3) == 0) {
                 setBase(BINARY);
@@ -319,7 +313,7 @@ int main(int argc, char ** argv) {
             else if (strncmp(pszCalculation, "oct", 3) == 0) {
                 setBase(OCTAL);
                 setTrigMode(degrees);
-                printf("= 0o%o\n", (unsigned int)strtoul(result.pszToken, NULL, DECIMAL));
+                printf("= 0o%o\n", (unsigned int)strtoul(result->getTokenStr().c_str(), NULL, DECIMAL));
             }
             else if (strncmp(pszCalculation, "deg", 3) == 0) {
                 setTrigMode(degrees);
@@ -328,22 +322,22 @@ int main(int argc, char ** argv) {
                 setTrigMode(radians);
             }
             else {
-                error = evaluate(pszCalculation, &result);
+                try {
+                    result = evaluate(pszCalculation);
 
-                if (error == EVALUATE_OK) {
                     if (doFormat) {
-                        pszFormattedResult = formatResult(&result);
+                        pszFormattedResult = formatResult(result);
 
                         printf("%s = %s\n", pszCalculation, pszFormattedResult);
 
                         free(pszFormattedResult);
                     }
                     else {
-                        printf("%s = %s\n", pszCalculation, result.pszToken);
+                        printf("%s = %s\n", pszCalculation, result->getTokenStr().c_str());
                     }
                 }
-                else {
-                    fprintf(stderr, "Evaluate failed for calc '%s' with error: %d\n", pszCalculation, error);
+                catch (calc_error & e) {
+                    printf("Calculation failed for %s: %s\n", pszCalculation, e.what());
                 }
             }
         }

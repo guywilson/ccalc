@@ -1,4 +1,5 @@
 #include "tokenizer.h"
+#include "token.h"
 
 #ifndef __INCL_CALCULATOR
 #define __INCL_CALCULATOR
@@ -13,8 +14,8 @@
 #define ERROR_EVALUATE_UNEXPECTED_TOKENS                -7
 #define ERROR_EVALUATE_NULL_STACK_POP                   -8
 
-int         memoryStore(token_t * t, int memoryLocation);
-token_t *   memoryFetch(int memoryLocation);
-int         evaluate(const char * pszExpression, token_t * result);
+void            memoryStore(operand_t * t, int memoryLocation);
+operand_t *     memoryFetch(int memoryLocation);
+operand_t *     evaluate(const char * pszExpression);
 
 #endif

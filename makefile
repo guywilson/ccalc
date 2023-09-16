@@ -20,7 +20,8 @@ TARGET = ccalc
 
 # Tools
 C = gcc
-LINKER = gcc
+CPP = g++
+LINKER = g++
 
 # postcompile step
 PRECOMPILE = @ mkdir -p $(BUILD) $(DEP)
@@ -31,6 +32,11 @@ CFLAGS_BASE=-c -Wall -pedantic
 CFLAGS_REL=$(CFLAGS_BASE) -O2
 CFLAGS_DBG=$(CFLAGS_BASE) -g
 
+CPPFLAGS_BASE = -c -Wall -pedantic -std=c++11
+CPPFLAGS_REL=$(CPPFLAGS_BASE) -O2
+CPPFLAGS_DBG=$(CPPFLAGS_BASE) -g
+
+CPPFLAGS=$(CPPFLAGS_REL)
 CFLAGS=$(CFLAGS_REL)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP)/$*.Td
 INCLUDEFLAGS = -I /usr/local/MacGPG2/include -I /opt/homebrew/include -I ${HOME}/Library/include
@@ -40,12 +46,14 @@ LIBFLAGS = -L /opt/homebrew/lib -L ${HOME}/Library/lib
 STDLIBS = 
 EXTLIBS = -lstrutils -lreadline -lmpfr -lgmp
 
+COMPILE.cpp = $(CPP) $(CPPFLAGS) $(DEPFLAGS) $(INCLUDEFLAGS) -o $@
 COMPILE.c = $(C) $(CFLAGS) $(DEPFLAGS) $(INCLUDEFLAGS) -o $@
 LINK.o = $(LINKER) $(LIBFLAGS) $(STDLIBS) -o $@
 
 CSRCFILES = $(wildcard $(SOURCE)/*.c)
-OBJFILES = $(patsubst $(SOURCE)/%.c, $(BUILD)/%.o, $(CSRCFILES))
-DEPFILES = $(patsubst $(SOURCE)/%.c, $(DEP)/%.d, $(CSRCFILES))
+CPPSRCFILES = $(wildcard $(SOURCE)/*.cpp)
+OBJFILES = $(patsubst $(SOURCE)/%.c, $(BUILD)/%.o, $(CSRCFILES)) $(patsubst $(SOURCE)/%.cpp, $(BUILD)/%.o, $(CPPSRCFILES))
+DEPFILES = $(patsubst $(SOURCE)/%.c, $(DEP)/%.d, $(CSRCFILES)) $(patsubst $(SOURCE)/%.cpp, $(DEP)/%.d, $(CPPSRCFILES))
 
 all: $(TARGET)
 
@@ -58,6 +66,12 @@ $(BUILD)/%.o: $(SOURCE)/%.c
 $(BUILD)/%.o: $(SOURCE)/%.c $(DEP)/%.d
 	$(PRECOMPILE)
 	$(COMPILE.c) $<
+	$(POSTCOMPILE)
+
+$(BUILD)/%.o: $(SOURCE)/%.cpp
+$(BUILD)/%.o: $(SOURCE)/%.cpp $(DEP)/%.d
+	$(PRECOMPILE)
+	$(COMPILE.cpp) $<
 	$(POSTCOMPILE)
 
 .PRECIOUS = $(DEP)/%.d

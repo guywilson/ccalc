@@ -9,24 +9,6 @@
 #include "utils.h"
 #include "factory.h"
 
-static const char * pszBraces = "({[]})";
-
-static char * trim(char * src) {
-    int         i;
-    int         len = strlen(src);
-
-    for (i = 0;i < len;i++) {
-        if (i > 0) {
-            if (isspace(src[i])) {
-                src[i] = 0;
-                break;
-            }
-        }
-    }
-
-    return src;
-}
-
 static bool isdelim(char ch) {
     int                     i;
     static const char *     pszDelimiters = " \t\n\r+-*/^:%&|~()[]{}";

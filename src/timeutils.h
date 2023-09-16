@@ -14,6 +14,10 @@
 #define FRIDAY							6
 #define SATURDAY						7
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void    tmUpdate(void);
 void    tmInitialiseUptimeClock(void);
 char *  tmGetUptime(void);
@@ -27,5 +31,9 @@ int     tmGetHour(void);
 int     tmGetMinute(void);
 int     tmGetSecond(void);
 int     tmGetMicrosecond(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

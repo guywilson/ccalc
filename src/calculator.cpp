@@ -11,6 +11,7 @@
 #include <mpfr.h>
 
 #include "logger.h"
+#include "calc_error.h"
 #include "tokenizer.h"
 #include "token.h"
 #include "utils.h"
@@ -29,11 +30,7 @@ static queue<token_t *>             tokenQueue;
 
 static operand_t                    memory[10];
 
-static void inline freeToken(token_t * t) {
-    delete t;
-}
-
-static int _convertToRPN(tokenizer_t * tokenizer) {
+static void _convertToRPN(tokenizer_t * tokenizer) {
     while (tzrHasMoreTokens(tokenizer)) {
         token_t * t = tzrNextToken(tokenizer);
         
@@ -64,7 +61,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
         */
         else if (t->getType() == token_operator) {
             while (!tokenStack.empty()) {
-                operator_t * op;
+                operator_t * op = (operator_t *)t;
+
                 token_t * topToken;
     
                 topToken = tokenStack.top();
@@ -80,7 +78,8 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                     {
                         token_t * op2;
 
-                        op2 = tokenStack.pop();
+                        op2 = tokenStack.top();
+                        tokenStack.pop();
                         tokenQueue.push(op2);
                     }
                     else {
@@ -138,7 +137,7 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
                     /*
                     ** If we've got here, we must have unmatched parenthesis...
                     */
-                    return ERROR_RPN_UNMATCHED_PARENTHESIS;
+                    throw unmatched_parenthesis_error("_convertToRPN()", __FILE__, __LINE__);
                 }
             }
         }
@@ -160,44 +159,40 @@ static int _convertToRPN(tokenizer_t * tokenizer) {
 
         if (stackToken == NULL) {
             lgLogError("NULL item on stack");
-            return ERROR_RPN_NULL_STACK_POP;
+            throw stack_error("NULL item on stack", __FILE__, __LINE__);
         }
 
         if (stackToken->getType() == token_brace) {
             /*
             ** If we've got here, we must have unmatched parenthesis...
             */
-            return ERROR_RPN_UNMATCHED_PARENTHESIS_ON_STACK;
+            throw unmatched_parenthesis_error("_convertToRPN()", __FILE__, __LINE__);
         }
         else {
             tokenQueue.push(stackToken);
         }
     }
-
-    return EVALUATE_OK;
 }
 
-int memoryStore(operand_t * operand, int memoryLocation) {
+void memoryStore(operand_t * operand, int memoryLocation) {
     if (memoryLocation < 0 || memoryLocation > 9) {
-        return -1;
+        throw calc_error("Memory index out-of-range", __FILE__, __LINE__);
     }
 
+    //memory[memoryLocation].
     memcpy(&memory[memoryLocation], operand, sizeof(operand_t));
-
-    return EVALUATE_OK;
 }
 
 operand_t * memoryFetch(int memoryLocation) {
     if (memoryLocation < 0 || memoryLocation > 9) {
-        return NULL;
+        throw calc_error("Memory index out-of-range", __FILE__, __LINE__);
     }
 
     return &memory[memoryLocation];
 }
 
-int evaluate(const char * pszExpression, operand_t * result) {
+operand_t * evaluate(const char * pszExpression) {
     tokenizer_t             tokenizer;
-    int                     error = 0;
 
     tzrInit(&tokenizer, pszExpression, getBase());
 
@@ -205,12 +200,7 @@ int evaluate(const char * pszExpression, operand_t * result) {
     ** Convert the calculation in infix notation to the postfix notation
     ** (Reverse Polish Notation) using the 'shunting yard algorithm'...
     */
-    error = _convertToRPN(&tokenizer);
-
-    if (error) {
-        lgLogError("Error converting to RPN");
-        return error;
-    }
+    _convertToRPN(&tokenizer);
 
     lgLogDebug("num items in queue = %d", tokenQueue.size());
 
@@ -246,7 +236,7 @@ int evaluate(const char * pszExpression, operand_t * result) {
                 lgLogError("NULL operand for function '%s'", t->getTokenStr().c_str());
                 delete t;
                 tzrFinish(&tokenizer);
-                return ERROR_EVALUATE_NULL_STACK_POP;
+                throw stack_error("NULL item on stack", __FILE__, __LINE__);
             }
 
             function_t * f = (function_t *)t;
@@ -269,7 +259,7 @@ int evaluate(const char * pszExpression, operand_t * result) {
                 lgLogError("NULL operand for operator '%s'", t->getTokenStr().c_str());
                 delete t;
                 tzrFinish(&tokenizer);
-                return ERROR_EVALUATE_NULL_STACK_POP;
+                throw stack_error("NULL item on stack", __FILE__, __LINE__);
             }
 
             operator_t * op = (operator_t *)t;
@@ -288,8 +278,9 @@ int evaluate(const char * pszExpression, operand_t * result) {
     ** have too many tokens and therefore an error...
     */
     if (tokenStack.size() == 1) {
-        result = (operand_t *)tokenStack.top();
+        operand_t * result = (operand_t *)tokenStack.top();
         tokenStack.pop();
+        return result;
     }
     else {
         lgLogError("evaluate(): Got invalid items on stack!");
@@ -301,10 +292,8 @@ int evaluate(const char * pszExpression, operand_t * result) {
         }
 
         tzrFinish(&tokenizer);
-        return ERROR_EVALUATE_UNEXPECTED_TOKENS;
+        throw stack_error("Invalid items on stack", __FILE__, __LINE__);
     }
 
     tzrFinish(&tokenizer);
-    
-    return EVALUATE_OK;
 }

@@ -8,29 +8,32 @@
 #include <mpfr.h>
 
 #include "tokenizer.h"
+#include "token.h"
+#include "calc_error.h"
 #include "calculator.h"
 #include "utils.h"
 
 static bool testEvaluate(const char * pszCalculation, const char * pszExpectedResult) {
-    token_t         r;
+    operand_t *     r;
     bool            success;
-    int             error = 0;
+    char *          pszResult;
 
-    error = evaluate(pszCalculation, &r);
-
-    if (error < 0) {
-        printf("**** Failed :( - Evaluate failed for [%s] with error: %d\n", pszCalculation, error);
+    try {
+        r = evaluate(pszCalculation);
+    }
+    catch (calc_error & e) {
+        printf("**** Failed :( - Evaluate failed for [%s] with error: %s\n", pszCalculation, e.what());
         return false;
     }
 
-    r.pszToken[strlen(pszExpectedResult)] = 0;
+    pszResult = strndup(r->getTokenStr().c_str(), strlen(pszExpectedResult));
 
-    if (strncmp(r.pszToken, pszExpectedResult, strlen(pszExpectedResult)) == 0) {
-        printf("**** Success :) - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, r.pszToken);
+    if (strncmp(pszResult, pszExpectedResult, strlen(pszExpectedResult)) == 0) {
+        printf("**** Success :) - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, pszResult);
         success = true;
     }
     else {
-        printf("**** Failed :( - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, r.pszToken);
+        printf("**** Failed :( - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, pszResult);
         success = false;
     }
 

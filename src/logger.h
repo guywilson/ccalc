@@ -16,6 +16,10 @@
 
 #define LOG_LEVEL_ALL           (LOG_LEVEL_INFO | LOG_LEVEL_STATUS | LOG_LEVEL_DEBUG | LOG_LEVEL_ERROR | LOG_LEVEL_FATAL)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _log_handle_t;
 typedef struct _log_handle_t        log_handle_t;
 
@@ -33,5 +37,9 @@ int             lgLogDebug(const char * fmt, ...);
 int             lgLogDebugNoCR(const char * fmt, ...);
 int             lgLogError(const char * fmt, ...);
 int             lgLogFatal(const char * fmt, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -413,6 +413,9 @@ class token_factory {
             else if (isFunctionMemory(pszToken)) {
                 return new function_memory_t(pszToken);
             }
+            else {
+                return NULL;
+            }
         }
 };
 

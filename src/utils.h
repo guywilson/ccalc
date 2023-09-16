@@ -3,12 +3,14 @@
 
 #include <mpfr.h>
 
-#include "tokenizer.h"
+//#include "tokenizer.h"
 
 #ifndef __INCL_UTILS
 #define __INCL_UTILS
 
-#define getBasePrecision()              (mpfr_prec_t)1024L
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
     radians,
@@ -22,5 +24,9 @@ void        setPrecision(mpfr_prec_t p);
 mpfr_prec_t getPrecision(void);
 void        setTrigMode(trig_mode_t m);
 trig_mode_t getTrigMode(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

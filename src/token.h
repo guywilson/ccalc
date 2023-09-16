@@ -43,19 +43,6 @@ class function_t;
 class operand_t;
 class constant_t;
 
-class _evaluatable_t {
-    public:
-        virtual operand_t * evaluate() {
-            return NULL;
-        }
-        virtual operand_t * evaluate(operand_t & o1) {
-            return NULL;
-        }
-        virtual operand_t * evaluate(operand_t & o1, operand_t & o2) {
-            return NULL;
-        }
-};
-
 class token_t {
     private:
         token_type_t    type;
@@ -70,11 +57,7 @@ class token_t {
         }
 
     protected:
-        token_t();
-
-        int getLength() {
-            return length;
-        }
+        token_t() {}
 
         void setType(token_type_t t) {
             type = t;
@@ -97,6 +80,10 @@ class token_t {
         void setTokenStr(const char * s) {
             tokenString.assign(s);
             length = (int)strlen(s);
+        }
+
+        int getLength() {
+            return length;
         }
 
         token_t(string & s) {
@@ -152,7 +139,6 @@ class brace_right_t : public brace_t {
 class operand_t : public token_t {
     private:
         mpfr_t      value;
-        mpfr_prec_t basePrecision;
         int         base;
 
     protected:
@@ -204,7 +190,7 @@ class operand_t : public token_t {
         }
 };
 
-class operator_t : public token_t, _evaluatable_t {
+class operator_t : public token_t {
     public:
         enum associativity {
             left,
@@ -235,11 +221,11 @@ class operator_plus_t : public operator_t {
         operator_plus_t(string & s) : operator_t(s) {}
         operator_plus_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_add(r, o1.getValue(), o2.getValue(), MPFR_RNDA);
+            mpfr_add(r, o1->getValue(), o2->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -260,11 +246,11 @@ class operator_minus_t : public operator_t {
         operator_minus_t(string & s) : operator_t(s) {}
         operator_minus_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_sub(r, o1.getValue(), o2.getValue(), MPFR_RNDA);
+            mpfr_sub(r, o1->getValue(), o2->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -285,11 +271,11 @@ class operator_multiply_t : public operator_t {
         operator_multiply_t(string & s) : operator_t(s) {}
         operator_multiply_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_mul(r, o1.getValue(), o2.getValue(), MPFR_RNDA);
+            mpfr_mul(r, o1->getValue(), o2->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -310,11 +296,11 @@ class operator_divide_t : public operator_t {
         operator_divide_t(string & s) : operator_t(s) {}
         operator_divide_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_div(r, o1.getValue(), o2.getValue(), MPFR_RNDA);
+            mpfr_div(r, o1->getValue(), o2->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -335,11 +321,11 @@ class operator_modulus_t : public operator_t {
         operator_modulus_t(string & s) : operator_t(s) {}
         operator_modulus_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_remainder(r, o1.getValue(), o2.getValue(), MPFR_RNDA);
+            mpfr_remainder(r, o1->getValue(), o2->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -360,11 +346,11 @@ class operator_power_t : public operator_t {
         operator_power_t(string & s) : operator_t(s) {}
         operator_power_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_pow(r, o1.getValue(), o2.getValue(), MPFR_RNDA);
+            mpfr_pow(r, o1->getValue(), o2->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -385,11 +371,11 @@ class operator_root_t : public operator_t {
         operator_root_t(string & s) : operator_t(s) {}
         operator_root_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_rootn_ui(r, o1.getValue(), mpfr_get_ui(o2.getValue(), MPFR_RNDA), MPFR_RNDA);
+            mpfr_rootn_ui(r, o1->getValue(), mpfr_get_ui(o2->getValue(), MPFR_RNDA), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -410,14 +396,14 @@ class operator_AND_t : public operator_t {
         operator_AND_t(string & s) : operator_t(s) {}
         operator_AND_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
             mpfr_set_ui(
                     r, 
-                    (mpfr_get_ui(o1.getValue(), MPFR_RNDA) & 
-                    mpfr_get_ui(o2.getValue(), MPFR_RNDA)), 
+                    (mpfr_get_ui(o1->getValue(), MPFR_RNDA) & 
+                    mpfr_get_ui(o2->getValue(), MPFR_RNDA)), 
                     MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
@@ -439,14 +425,14 @@ class operator_OR_t : public operator_t {
         operator_OR_t(string & s) : operator_t(s) {}
         operator_OR_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
             mpfr_set_ui(
                     r, 
-                    (mpfr_get_ui(o1.getValue(), MPFR_RNDA) | 
-                    mpfr_get_ui(o2.getValue(), MPFR_RNDA)), 
+                    (mpfr_get_ui(o1->getValue(), MPFR_RNDA) | 
+                    mpfr_get_ui(o2->getValue(), MPFR_RNDA)), 
                     MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
@@ -468,14 +454,14 @@ class operator_XOR_t : public operator_t {
         operator_XOR_t(string & s) : operator_t(s) {}
         operator_XOR_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
             mpfr_set_ui(
                     r, 
-                    (mpfr_get_ui(o1.getValue(), MPFR_RNDA) ^ 
-                    mpfr_get_ui(o2.getValue(), MPFR_RNDA)), 
+                    (mpfr_get_ui(o1->getValue(), MPFR_RNDA) ^ 
+                    mpfr_get_ui(o2->getValue(), MPFR_RNDA)), 
                     MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
@@ -497,14 +483,14 @@ class operator_LSHIFT_t : public operator_t {
         operator_LSHIFT_t(string & s) : operator_t(s) {}
         operator_LSHIFT_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
             mpfr_set_ui(
                     r, 
-                    (mpfr_get_ui(o1.getValue(), MPFR_RNDA) << 
-                    mpfr_get_ui(o2.getValue(), MPFR_RNDA)), 
+                    (mpfr_get_ui(o1->getValue(), MPFR_RNDA) << 
+                    mpfr_get_ui(o2->getValue(), MPFR_RNDA)), 
                     MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
@@ -526,14 +512,14 @@ class operator_RSHIFT_t : public operator_t {
         operator_RSHIFT_t(string & s) : operator_t(s) {}
         operator_RSHIFT_t(const char * s) : operator_t(s) {}
 
-        operand_t * evaluate(operand_t & o1, operand_t & o2) {
+        operand_t * evaluate(operand_t * o1, operand_t * o2) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
             mpfr_set_ui(
                     r, 
-                    (mpfr_get_ui(o1.getValue(), MPFR_RNDA) >> 
-                    mpfr_get_ui(o2.getValue(), MPFR_RNDA)), 
+                    (mpfr_get_ui(o1->getValue(), MPFR_RNDA) >> 
+                    mpfr_get_ui(o2->getValue(), MPFR_RNDA)), 
                     MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
@@ -550,7 +536,7 @@ class operator_RSHIFT_t : public operator_t {
         }
 };
 
-class function_t : public operator_t, _evaluatable_t {
+class function_t : public operator_t {
     public:
         function_t(string & s) : operator_t(s) {
             setType(token_function);
@@ -566,6 +552,10 @@ class function_t : public operator_t, _evaluatable_t {
         virtual operand_t * evaluate(operand_t * o1) {
             return NULL;
         }
+
+        virtual operand_t * evaluate(operand_t * o1, operand_t * o2) {
+            return NULL;
+        }
 };
 
 class function_sin_t : public function_t {
@@ -573,11 +563,11 @@ class function_sin_t : public function_t {
         function_sin_t(string & s) : function_t(s) {}
         function_sin_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_sin(r, o1.getValue(), MPFR_RNDA);
+            mpfr_sin(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -590,11 +580,11 @@ class function_cos_t : public function_t {
         function_cos_t(string & s) : function_t(s) {}
         function_cos_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_cos(r, o1.getValue(), MPFR_RNDA);
+            mpfr_cos(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -607,11 +597,11 @@ class function_tan_t : public function_t {
         function_tan_t(string & s) : function_t(s) {}
         function_tan_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_tan(r, o1.getValue(), MPFR_RNDA);
+            mpfr_tan(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -624,11 +614,11 @@ class function_asin_t : public function_t {
         function_asin_t(string & s) : function_t(s) {}
         function_asin_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_asin(r, o1.getValue(), MPFR_RNDA);
+            mpfr_asin(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -641,11 +631,11 @@ class function_acos_t : public function_t {
         function_acos_t(string & s) : function_t(s) {}
         function_acos_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_acos(r, o1.getValue(), MPFR_RNDA);
+            mpfr_acos(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -658,11 +648,11 @@ class function_atan_t : public function_t {
         function_atan_t(string & s) : function_t(s) {}
         function_atan_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_atan(r, o1.getValue(), MPFR_RNDA);
+            mpfr_atan(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -675,11 +665,11 @@ class function_sinh_t : public function_t {
         function_sinh_t(string & s) : function_t(s) {}
         function_sinh_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_sinh(r, o1.getValue(), MPFR_RNDA);
+            mpfr_sinh(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -692,11 +682,11 @@ class function_cosh_t : public function_t {
         function_cosh_t(string & s) : function_t(s) {}
         function_cosh_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_cosh(r, o1.getValue(), MPFR_RNDA);
+            mpfr_cosh(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -709,11 +699,11 @@ class function_tanh_t : public function_t {
         function_tanh_t(string & s) : function_t(s) {}
         function_tanh_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_tanh(r, o1.getValue(), MPFR_RNDA);
+            mpfr_tanh(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -726,11 +716,11 @@ class function_asinh_t : public function_t {
         function_asinh_t(string & s) : function_t(s) {}
         function_asinh_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_asinh(r, o1.getValue(), MPFR_RNDA);
+            mpfr_asinh(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -743,11 +733,11 @@ class function_acosh_t : public function_t {
         function_acosh_t(string & s) : function_t(s) {}
         function_acosh_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_cos(r, o1.getValue(), MPFR_RNDA);
+            mpfr_cos(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -760,11 +750,11 @@ class function_atanh_t : public function_t {
         function_atanh_t(string & s) : function_t(s) {}
         function_atanh_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_tan(r, o1.getValue(), MPFR_RNDA);
+            mpfr_tan(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -777,11 +767,11 @@ class function_sqrt_t : public function_t {
         function_sqrt_t(string & s) : function_t(s) {}
         function_sqrt_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_sqrt(r, o1.getValue(), MPFR_RNDA);
+            mpfr_sqrt(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -794,11 +784,11 @@ class function_factorial_t : public function_t {
         function_factorial_t(string & s) : function_t(s) {}
         function_factorial_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_fac_ui(r, mpfr_get_ui(o1.getValue(), MPFR_RNDA), MPFR_RNDA);
+            mpfr_fac_ui(r, mpfr_get_ui(o1->getValue(), MPFR_RNDA), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -811,11 +801,11 @@ class function_logarithm_t : public function_t {
         function_logarithm_t(string & s) : function_t(s) {}
         function_logarithm_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_log10(r, o1.getValue(), MPFR_RNDA);
+            mpfr_log10(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -828,11 +818,11 @@ class function_natural_log_t : public function_t {
         function_natural_log_t(string & s) : function_t(s) {}
         function_natural_log_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_log(r, o1.getValue(), MPFR_RNDA);
+            mpfr_log(r, o1->getValue(), MPFR_RNDA);
 
             operand_t * result = new operand_t(r);
 
@@ -845,7 +835,7 @@ class function_memory_t : public function_t {
         function_memory_t(string & s) : function_t(s) {}
         function_memory_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t & o1) {
+        operand_t * evaluate(operand_t * o1) {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
@@ -856,7 +846,7 @@ class function_memory_t : public function_t {
         }
 };
 
-class constant_t : public operand_t, _evaluatable_t {
+class constant_t : public operand_t {
     public:
         constant_t(string & s) : operand_t(s) {
             setType(token_constant);
