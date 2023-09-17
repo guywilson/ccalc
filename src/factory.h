@@ -6,6 +6,7 @@
 #include <mpfr.h>
 
 #include "token.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -226,7 +227,7 @@ class token_factory {
                 for (i = 0;i < tokenLength;i++) {
                     ch = pszToken[i];
 
-                    switch (i) {
+                    switch (getBase()) {
                         case DECIMAL:
                             if (!isDecimalDigit(ch)) {
                                 return false;

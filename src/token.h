@@ -4,6 +4,9 @@
 #include <gmp.h>
 #include <mpfr.h>
 
+#include "utils.h"
+#include "logger.h"
+
 using namespace std;
 
 #ifndef __INCL_TOKEN
@@ -50,12 +53,6 @@ class token_t {
         string  tokenString;
         int     length;
 
-        void identifyType(const char * s) {
-            if (s[0] == '+' || s[0] == '-') {
-
-            }
-        }
-
     protected:
         token_t() {}
 
@@ -66,6 +63,27 @@ class token_t {
     public:
         token_type_t getType() {
             return type;
+        }
+
+        static const char * getTokenTypeStr(token_t * t) {
+            if (t->getType() == token_brace) {
+                return "brace";
+            }
+            else if (t->getType() == token_constant) {
+                return "constant";
+            }
+            else if (t->getType() == token_function) {
+                return "function";
+            }
+            else if (t->getType() == token_operand) {
+                return "operand";
+            }
+            else if (t->getType() == token_operator) {
+                return "operator";
+            }
+            else {
+                return "unknown";
+            }
         }
 
         string & getTokenStr() {
@@ -101,8 +119,12 @@ class token_t {
 
 class brace_t : public token_t {
     public:
-        brace_t(string & s) : token_t(s) {}
-        brace_t(const char * s) : token_t(s) {}
+        brace_t(string & s) : token_t(s) {
+            setType(token_brace);
+        }
+        brace_t(const char * s) : token_t(s) {
+            setType(token_brace);
+        }
 
         virtual bool isBraceLeft() = 0;
         virtual bool isBraceRight() = 0;
@@ -148,6 +170,7 @@ class operand_t : public token_t {
         }
 
         void setValue(mpfr_ptr m) {
+            mpfr_init2(value, getBasePrecision());
             mpfr_set(value, m, MPFR_RNDA);
         }
 
@@ -171,8 +194,15 @@ class operand_t : public token_t {
         }
 
         operand_t(mpfr_ptr v) {
+            char    szFormatStr[32];
+            char    s[128];
+
             setValue(v);
             setType(token_operand);
+
+            snprintf(szFormatStr, 32, "%%.%ldRf", (long)getPrecision());
+            mpfr_sprintf(s, szFormatStr, v);
+            setTokenStr(s);
         }
 
         operand_t(operand_t & o) {
