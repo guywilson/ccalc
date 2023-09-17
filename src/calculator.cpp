@@ -25,7 +25,6 @@ using namespace std;
 #define CONSTANT_C            299792458U
 #define CONSTANT_G                  "0.000000000066743"
 
-static stack<token_t *>             tokenStack;
 static queue<token_t *>             tokenQueue;
 
 static operand_t                    memory[10];
@@ -45,23 +44,23 @@ static token_t * queueGet() {
     return t;
 }
 
-static void stackPush(token_t * t) {
-    tokenStack.push(t);
+static void stackPush(stack<token_t *> * s, token_t * t) {
+    s->push(t);
 
     lgLogDebug("stackPush - '%s'", t->getTokenStr().c_str());
 }
 
-static token_t * stackPop() {
-    token_t * t = tokenStack.top();
-    tokenStack.pop();
+static token_t * stackPop(stack<token_t *> * s) {
+    token_t * t = s->top();
+    s->pop();
 
     lgLogDebug("stackPop - '%s'", t->getTokenStr().c_str());
 
     return t;
 }
 
-static token_t * stackPeek() {
-    token_t * t = tokenStack.top();
+static token_t * stackPeek(stack<token_t *> * s) {
+    token_t * t = s->top();
 
     lgLogDebug("stackPeek - '%s'", t->getTokenStr().c_str());
 
@@ -69,6 +68,8 @@ static token_t * stackPeek() {
 }
 
 static void _convertToRPN(tokenizer_t * tokenizer) {
+    stack<token_t *> * operatorStack = new stack<token_t *>();
+
     while (tzrHasMoreTokens(tokenizer)) {
         token_t * t = tzrNextToken(tokenizer);
         
@@ -85,7 +86,7 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
         ** If the token is a function token, then push it onto the stack.
         */
         else if (t->getType() == token_function) {
-            stackPush(t);
+            stackPush(operatorStack, t);
         }
         /*
         ** If the token is an operator, operand->value, then:
@@ -98,34 +99,29 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
         **	at the end of iteration push o1 onto the operator stack.
         */
         else if (t->getType() == token_operator) {
-            while (!tokenStack.empty()) {
-                operator_t * op = (operator_t *)t;
+            operator_t * o1 = (operator_t *)t;
 
-                token_t * topToken;
-    
-                topToken = stackPeek();
+            while (!operatorStack->empty()) {
+
+                token_t * topToken = stackPeek(operatorStack);
 
                 if (topToken->getType() != token_operator && topToken->getType() != token_function) {
                     break;
                 }
+
+                operator_t * o2 = (operator_t *)topToken;
+
+                if ((o1->getAssociativity() == operator_t::left && o1->getPrescedence() <= o2->getPrescedence()) ||
+                    (o1->getAssociativity() == operator_t::right && o1->getPrescedence() < o2->getPrescedence()))
+                {
+                    queuePut(stackPop(operatorStack));
+                }
                 else {
-                    operator_t * topOp = (operator_t *)topToken;
-
-                    if ((op->getAssociativity() == operator_t::left && op->getPrescedence() <= topOp->getPrescedence()) ||
-                        (op->getAssociativity() == operator_t::right && op->getPrescedence() < topOp->getPrescedence()))
-                    {
-                        token_t * op2;
-
-                        op2 = stackPop();
-                        queuePut(op2);
-                    }
-                    else {
-                        break;
-                    }
+                    break;
                 }
             }
 
-            stackPush(t);
+            stackPush(operatorStack, t);
         }
         else if (t->getType() == token_brace) {
             brace_t * brace = (brace_t *)t;
@@ -134,7 +130,7 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
             ** If the token is a left parenthesis (i.e. "("), then push it onto the stack.
             */
             if (brace->isBraceLeft()) {
-                stackPush(t);
+                stackPush(operatorStack, t);
             }
             else {
                 /*
@@ -149,23 +145,19 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
                 */
                 bool foundLeftParenthesis = false;
 
-                while (!tokenStack.empty() && !foundLeftParenthesis) {
-                    token_t * stackToken;
-
-                    stackToken = stackPop();
+                while (!operatorStack->empty()) {
+                    token_t * stackToken = stackPop(operatorStack);
 
                     if (stackToken->getType() == token_brace) {
                         brace_t * b = (brace_t *)stackToken;
 
                         if (b->isBraceLeft()) {
                             foundLeftParenthesis = true;
-                        }
-                        else {
-                            queuePut(t);
+                            break;
                         }
                     }
                     else {
-                        queuePut(t);
+                        queuePut(stackToken);
                     }
                 }
 
@@ -179,7 +171,7 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
         }
     }
 
-    lgLogDebug("Num items in stack %d", (int)tokenStack.size());
+    lgLogDebug("Num items in stack %d", (int)operatorStack->size());
 
     /*
         While there are still operator tokens in the stack:
@@ -187,10 +179,10 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
         then there are mismatched parentheses.
         Pop the operator onto the output queue.
     */
-    while (!tokenStack.empty()) {
+    while (!operatorStack->empty()) {
         token_t * stackToken;
 
-        stackToken = stackPop();
+        stackToken = stackPop(operatorStack);
 
         if (stackToken == NULL) {
             lgLogError("NULL item on stack");
@@ -207,6 +199,8 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
             queuePut(stackToken);
         }
     }
+
+    delete operatorStack;
 }
 
 void memoryStore(operand_t * operand, int memoryLocation) {
@@ -239,6 +233,8 @@ operand_t * evaluate(const char * pszExpression) {
 
     lgLogDebug("num items in queue = %d", tokenQueue.size());
 
+    stack<token_t *> * stk = new stack<token_t *>();
+
     while (!tokenQueue.empty()) {
         token_t * t;
 
@@ -246,7 +242,7 @@ operand_t * evaluate(const char * pszExpression) {
 
         if (t->getType() == token_operand) {
             lgLogDebug("Got operand: '%s'", t->getTokenStr().c_str());
-            stackPush(t);
+            stackPush(stk, t);
         }
         else if (t->getType() == token_constant) {
             lgLogDebug("Got constant: '%s'", t->getTokenStr().c_str());
@@ -255,28 +251,18 @@ operand_t * evaluate(const char * pszExpression) {
 
             operand_t * result = c->evaluate();
 
-            stackPush(result);
+            stackPush(stk, result);
         }
-        /*
-        ** Must be Operator or Function...
-        */
         else if (t->getType() == token_function) {
             operand_t * o1;
 
-            o1 = (operand_t *)stackPop();
-
-            if (o1 == NULL) {
-                lgLogError("NULL operand for function '%s'", t->getTokenStr().c_str());
-                delete t;
-                tzrFinish(&tokenizer);
-                throw stack_error("NULL item on stack", __FILE__, __LINE__);
-            }
+            o1 = (operand_t *)stackPop(stk);
 
             function_t * f = (function_t *)t;
 
             operand_t * result = f->evaluate(o1);
 
-            stackPush(result);
+            stackPush(stk, result);
 
             delete o1;
         }
@@ -284,21 +270,14 @@ operand_t * evaluate(const char * pszExpression) {
             operand_t * o1;
             operand_t * o2;
 
-            o2 = (operand_t *)stackPop();
-            o1 = (operand_t *)stackPop();
-
-            if (o1 == NULL || o2 == NULL) {
-                lgLogError("NULL operand for operator '%s'", t->getTokenStr().c_str());
-                delete t;
-                tzrFinish(&tokenizer);
-                throw stack_error("NULL item on stack", __FILE__, __LINE__);
-            }
+            o2 = (operand_t *)stackPop(stk);
+            o1 = (operand_t *)stackPop(stk);
 
             operator_t * op = (operator_t *)t;
 
             operand_t * result = op->evaluate(o1, o2);
 
-            stackPush(result);
+            stackPush(stk, result);
 
             delete o1;
             delete o2;
@@ -310,15 +289,15 @@ operand_t * evaluate(const char * pszExpression) {
     ** it is the result of the calculation. Otherwise, we
     ** have too many tokens and therefore an error...
     */
-    if (tokenStack.size() == 1) {
-        operand_t * result = (operand_t *)stackPop();
+    if (stk->size() == 1) {
+        operand_t * result = (operand_t *)stackPop(stk);
         return result;
     }
     else {
         lgLogError("evaluate(): Got invalid items on stack!");
 
-        while (!tokenStack.empty()) {
-            token_t * tok = stackPop();
+        while (!stk->empty()) {
+            token_t * tok = stackPop(stk);
             lgLogError("Invalid item on stack '%s'\n", tok->getTokenStr().c_str());
         }
 
@@ -327,4 +306,5 @@ operand_t * evaluate(const char * pszExpression) {
     }
 
     tzrFinish(&tokenizer);
+    delete stk;
 }
