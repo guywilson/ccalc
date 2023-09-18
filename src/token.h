@@ -4,13 +4,14 @@
 #include <gmp.h>
 #include <mpfr.h>
 
-#include "utils.h"
 #include "logger.h"
 
 using namespace std;
 
 #ifndef __INCL_TOKEN
 #define __INCL_TOKEN
+
+#include "system.h"
 
 #define getBasePrecision()                  1024L
 
@@ -51,7 +52,7 @@ class token_t {
         token_type_t    type;
         
         string  tokenString;
-        int     length;
+        size_t  length;
         int     base;
 
     protected:
@@ -93,12 +94,12 @@ class token_t {
 
         void setTokenStr(string & s) {
             tokenString.assign(s);
-            length = (int)s.length();
+            length = s.length();
         }
 
         void setTokenStr(const char * s) {
             tokenString.assign(s);
-            length = (int)strlen(s);
+            length = strlen(s);
         }
 
         void setBase(int b) {
@@ -108,8 +109,8 @@ class token_t {
         int getBase() {
             return base;
         }
-        
-        int getLength() {
+
+        size_t getLength() {
             return length;
         }
 
@@ -179,8 +180,20 @@ class operand_t : public token_t {
         }
 
         void setValue(mpfr_ptr m) {
+            char    szFormatStr[32];
+            char    s[128];
+
             mpfr_init2(value, getBasePrecision());
             mpfr_set(value, m, MPFR_RNDA);
+
+            system_t & sys = system_t::getInstance();
+            snprintf(szFormatStr, 32, "%%.%ldRf", (long)sys.getPrecision());
+            mpfr_sprintf(s, szFormatStr, m);
+            setTokenStr(s);
+        }
+
+        void setValue(operand_t * o) {
+            setValue(o->getValue());
         }
 
         int getBase() {
@@ -192,6 +205,20 @@ class operand_t : public token_t {
         }
 
     public:
+        mpfr_ptr getValue() {
+            return value;
+        }
+
+        operand_t & operator=(operand_t * o) {
+            if (this == o) {
+                return *this;
+            }
+
+            setValue(o);
+
+            return *this;
+        }
+
         operand_t(const char * s) : token_t(s) {
             setValue(s);
             setType(token_operand);
@@ -203,19 +230,12 @@ class operand_t : public token_t {
         }
 
         operand_t(mpfr_ptr v) {
-            char    szFormatStr[32];
-            char    s[128];
-
             setValue(v);
             setType(token_operand);
-
-            snprintf(szFormatStr, 32, "%%.%ldRf", (long)getPrecision());
-            mpfr_sprintf(s, szFormatStr, v);
-            setTokenStr(s);
         }
 
-        operand_t(operand_t & o) {
-            setValue(o.getValue());
+        operand_t(operand_t * o) {
+            setValue(o);
             setType(token_operand);
         }
 
@@ -226,10 +246,6 @@ class operand_t : public token_t {
 
         ~operand_t() {
             mpfr_clear(value);
-        }
-
-        mpfr_ptr getValue() {
-            return value;
         }
 };
 
@@ -635,7 +651,9 @@ class function_sin_t : public function_t {
 
             mpfr_init2(r, getBasePrecision());
 
-            if (getTrigMode() == degrees) {
+            system_t & sys = system_t::getInstance();
+
+            if (sys.getTrigMode() == degrees) {
                 mpfr_sinu(r, o1->getValue(), 360U, MPFR_RNDA);
             }
             else {
@@ -660,7 +678,9 @@ class function_cos_t : public function_t {
 
             mpfr_init2(r, getBasePrecision());
 
-            if (getTrigMode() == degrees) {
+            system_t & sys = system_t::getInstance();
+
+            if (sys.getTrigMode() == degrees) {
                 mpfr_cosu(r, o1->getValue(), 360U, MPFR_RNDA);
             }
             else {
@@ -685,7 +705,9 @@ class function_tan_t : public function_t {
 
             mpfr_init2(r, getBasePrecision());
 
-            if (getTrigMode() == degrees) {
+            system_t & sys = system_t::getInstance();
+
+            if (sys.getTrigMode() == degrees) {
                 mpfr_tanu(r, o1->getValue(), 360U, MPFR_RNDA);
             }
             else {
@@ -710,7 +732,9 @@ class function_asin_t : public function_t {
 
             mpfr_init2(r, getBasePrecision());
 
-            if (getTrigMode() == degrees) {
+            system_t & sys = system_t::getInstance();
+
+            if (sys.getTrigMode() == degrees) {
                 mpfr_asinu(r, o1->getValue(), 360U, MPFR_RNDA);
             }
             else {
@@ -735,7 +759,9 @@ class function_acos_t : public function_t {
 
             mpfr_init2(r, getBasePrecision());
 
-            if (getTrigMode() == degrees) {
+            system_t & sys = system_t::getInstance();
+
+            if (sys.getTrigMode() == degrees) {
                 mpfr_acosu(r, o1->getValue(), 360U, MPFR_RNDA);
             }
             else {
@@ -760,7 +786,9 @@ class function_atan_t : public function_t {
 
             mpfr_init2(r, getBasePrecision());
 
-            if (getTrigMode() == degrees) {
+            system_t & sys = system_t::getInstance();
+
+            if (sys.getTrigMode() == degrees) {
                 mpfr_atanu(r, o1->getValue(), 360U, MPFR_RNDA);
             }
             else {
@@ -970,17 +998,13 @@ class function_memory_t : public function_t {
         function_memory_t(string & s) : function_t(s) {}
         function_memory_t(const char * s) : function_t(s) {}
 
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
+        // operand_t * evaluate(operand_t * o1) {
+        //     system_t & sys = system_t::getInstance();
 
-            mpfr_init2(r, getBasePrecision());
+        //     operand_t * result = sys.retrieve((int)mpfr_get_si(o1->getValue(), MPFR_RNDA));
 
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
+        //     return result;
+        // }
 };
 
 class constant_t : public operand_t {

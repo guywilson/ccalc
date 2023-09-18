@@ -6,7 +6,7 @@
 #include <mpfr.h>
 
 #include "token.h"
-#include "utils.h"
+#include "system.h"
 
 using namespace std;
 
@@ -219,6 +219,8 @@ class token_factory {
             int     tokenLength = strlen(pszToken);
             char    ch;
 
+            system_t & sys = system_t::getInstance();
+
             if (pszToken[0] == '-' && tokenLength == 1) {
                 // Must be the '-' operator...
                 return false;
@@ -227,7 +229,7 @@ class token_factory {
                 for (i = 0;i < tokenLength;i++) {
                     ch = pszToken[i];
 
-                    switch (getBase()) {
+                    switch (sys.getBase()) {
                         case DECIMAL:
                             if (!isDecimalDigit(ch)) {
                                 return false;

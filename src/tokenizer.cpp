@@ -7,14 +7,14 @@
 
 #include "tokenizer.h"
 #include "logger.h"
-#include "utils.h"
+#include "system.h"
 #include "factory.h"
 
 static bool isdelim(char ch) {
     int                     i;
     static const char *     pszDelimiters = " \t\n\r+-*/^:%&|~()[]{}";
 
-    for (i = 0;i < strlen(pszDelimiters);i++) {
+    for (i = 0;i < (int)strlen(pszDelimiters);i++) {
         if (ch == pszDelimiters[i]) {
             return true;
         }
@@ -31,7 +31,7 @@ static char * _removeSpaces(const char * pszExpression) {
 
     pszCopy = (char *)calloc(strlen(pszExpression) + 1, sizeof(char));
 
-    for (i = 0;i < strlen(pszExpression);i++) {
+    for (i = 0;i < (int)strlen(pszExpression);i++) {
         ch = pszExpression[i];
 
         if (!isspace(ch)) {

@@ -14,7 +14,7 @@
 #include "calc_error.h"
 #include "tokenizer.h"
 #include "token.h"
-#include "utils.h"
+#include "system.h"
 #include "calculator.h"
 
 using namespace std;
@@ -26,8 +26,6 @@ using namespace std;
 #define CONSTANT_G                  "0.000000000066743"
 
 static queue<token_t *>             tokenQueue;
-
-static operand_t                    memory[10];
 
 static void queuePut(token_t * t) {
     tokenQueue.push(t);
@@ -201,27 +199,12 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
     delete operatorStack;
 }
 
-void memoryStore(operand_t * operand, int memoryLocation) {
-    if (memoryLocation < 0 || memoryLocation > 9) {
-        throw calc_error("Memory index out-of-range", __FILE__, __LINE__);
-    }
-
-    //memory[memoryLocation].
-    memcpy(&memory[memoryLocation], operand, sizeof(operand_t));
-}
-
-operand_t * memoryFetch(int memoryLocation) {
-    if (memoryLocation < 0 || memoryLocation > 9) {
-        throw calc_error("Memory index out-of-range", __FILE__, __LINE__);
-    }
-
-    return &memory[memoryLocation];
-}
-
 operand_t * evaluate(const char * pszExpression) {
     tokenizer_t             tokenizer;
 
-    tzrInit(&tokenizer, pszExpression, getBase());
+    system_t & sys = system_t::getInstance();
+
+    tzrInit(&tokenizer, pszExpression, sys.getBase());
 
     /*
     ** Convert the calculation in infix notation to the postfix notation

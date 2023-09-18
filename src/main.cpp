@@ -31,7 +31,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "tokenizer.h"
 #include "calculator.h"
 #include "timeutils.h"
-#include "utils.h"
+#include "system.h"
+#include "memory.h"
 #include "test.h"
 
 #define DEFAULT_LOG_LEVEL                       (LOG_LEVEL_FATAL | LOG_LEVEL_ERROR)
@@ -104,7 +105,9 @@ static void printUsage(void) {
 }
 
 static const char * getBaseString(void) {
-    switch (getBase()) {
+    system_t & sys = system_t::getInstance();
+
+    switch (sys.getBase()) {
         case DECIMAL:
             return "DEC";
 
@@ -123,8 +126,10 @@ static const char * getBaseString(void) {
 }
 
 static const char * getTrigModeString(void) {
-    if (getBase() == DECIMAL) {
-        switch (getTrigMode()) {
+    system_t & sys = system_t::getInstance();
+
+    if (sys.getBase() == DECIMAL) {
+        switch (sys.getTrigMode()) {
             case radians:
                 return "RN";
 
@@ -151,7 +156,9 @@ static char * formatResult(operand_t * result) {
 
     allocateLen = result->getLength();
 
-    switch (getBase()) {
+    system_t & sys = system_t::getInstance();
+
+    switch (sys.getBase()) {
         case DECIMAL:
             if (allocateLen > 3) {
                 i = result->getTokenStr().find_first_of('.');
@@ -194,8 +201,8 @@ static char * formatResult(operand_t * result) {
 
     pszFormattedResult[allocateLen] = 0;
 
-    if (allocateLen > result->getLength() && getBase() != OCTAL) {
-        if (getBase() != DECIMAL) {
+    if (allocateLen > result->getLength() && sys.getBase() != OCTAL) {
+        if (sys.getBase() != DECIMAL) {
             delimRangeLimit = result->getLength() - 1;
         }
         
@@ -239,9 +246,12 @@ int main(int argc, char ** argv) {
 
     using_history();
 
-    setPrecision(DEFAULT_PRECISION);
-    setBase(DECIMAL);
-    setTrigMode(degrees);
+    system_t & sys = system_t::getInstance();
+    memory_t & mem = memory_t::getInstance();
+
+    sys.setPrecision(DEFAULT_PRECISION);
+    sys.setBase(DECIMAL);
+    sys.setTrigMode(degrees);
 
     lgOpenStdout("LOG_LEVEL_ALL");
     lgSetLogLevel(DEFAULT_LOG_LEVEL);
@@ -266,7 +276,7 @@ int main(int argc, char ** argv) {
                 return test();
             }
             else if (strncmp(pszCalculation, "setp", 4) == 0) {
-                setPrecision(strtol(&pszCalculation[4], NULL, BASE_10));
+                sys.setPrecision(strtol(&pszCalculation[4], NULL, BASE_10));
             }
             else if (strncmp(pszCalculation, "dbgon", 5) == 0) {
                 lgSetLogLevel(LOG_LEVEL_ALL);
@@ -290,36 +300,36 @@ int main(int argc, char ** argv) {
                 int m = atoi(&pszCalculation[5]);
 
                 try {
-                    memoryStore(result, m);
+                    mem.store(m, result);
                 }
                 catch (calc_error & e) {
                     fprintf(stderr, "Failed to store result in memory %d: %s\n", m, e.what());
                 }
             }
             else if (strncmp(pszCalculation, "dec", 3) == 0) {
-                setBase(DECIMAL);
+                sys.setBase(DECIMAL);
                 printf("= %s\n", result->getTokenStr().c_str());
             }
             else if (strncmp(pszCalculation, "hex", 3) == 0) {
-                setBase(HEXADECIMAL);
-                setTrigMode(degrees);
+                sys.setBase(HEXADECIMAL);
+                sys.setTrigMode(degrees);
 
                 printf("= 0x%08X\n", (unsigned int)strtoul(result->getTokenStr().c_str(), NULL, DECIMAL));
             }
             else if (strncmp(pszCalculation, "bin", 3) == 0) {
-                setBase(BINARY);
-                setTrigMode(degrees);
+                sys.setBase(BINARY);
+                sys.setTrigMode(degrees);
             }
             else if (strncmp(pszCalculation, "oct", 3) == 0) {
-                setBase(OCTAL);
-                setTrigMode(degrees);
+                sys.setBase(OCTAL);
+                sys.setTrigMode(degrees);
                 printf("= 0o%o\n", (unsigned int)strtoul(result->getTokenStr().c_str(), NULL, DECIMAL));
             }
             else if (strncmp(pszCalculation, "deg", 3) == 0) {
-                setTrigMode(degrees);
+                sys.setTrigMode(degrees);
             }
             else if (strncmp(pszCalculation, "rad", 3) == 0) {
-                setTrigMode(radians);
+                sys.setTrigMode(radians);
             }
             else {
                 try {
