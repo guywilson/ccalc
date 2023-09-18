@@ -597,7 +597,13 @@ class function_sin_t : public function_t {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_sin(r, o1->getValue(), MPFR_RNDA);
+
+            if (getTrigMode() == degrees) {
+                mpfr_sinu(r, o1->getValue(), 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_sin(r, o1->getValue(), MPFR_RNDA);
+            }
 
             operand_t * result = new operand_t(r);
 
@@ -614,7 +620,13 @@ class function_cos_t : public function_t {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_cos(r, o1->getValue(), MPFR_RNDA);
+
+            if (getTrigMode() == degrees) {
+                mpfr_cosu(r, o1->getValue(), 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_cos(r, o1->getValue(), MPFR_RNDA);
+            }
 
             operand_t * result = new operand_t(r);
 
@@ -631,7 +643,13 @@ class function_tan_t : public function_t {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_tan(r, o1->getValue(), MPFR_RNDA);
+
+            if (getTrigMode() == degrees) {
+                mpfr_tanu(r, o1->getValue(), 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_tan(r, o1->getValue(), MPFR_RNDA);
+            }
 
             operand_t * result = new operand_t(r);
 
@@ -648,7 +666,13 @@ class function_asin_t : public function_t {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_asin(r, o1->getValue(), MPFR_RNDA);
+
+            if (getTrigMode() == degrees) {
+                mpfr_asinu(r, o1->getValue(), 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_asin(r, o1->getValue(), MPFR_RNDA);
+            }
 
             operand_t * result = new operand_t(r);
 
@@ -665,7 +689,13 @@ class function_acos_t : public function_t {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_acos(r, o1->getValue(), MPFR_RNDA);
+
+            if (getTrigMode() == degrees) {
+                mpfr_acosu(r, o1->getValue(), 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_acos(r, o1->getValue(), MPFR_RNDA);
+            }
 
             operand_t * result = new operand_t(r);
 
@@ -682,7 +712,13 @@ class function_atan_t : public function_t {
             mpfr_t r;
 
             mpfr_init2(r, getBasePrecision());
-            mpfr_atan(r, o1->getValue(), MPFR_RNDA);
+
+            if (getTrigMode() == degrees) {
+                mpfr_atanu(r, o1->getValue(), 360U, MPFR_RNDA);
+            }
+            else {
+                mpfr_atan(r, o1->getValue(), MPFR_RNDA);
+            }
 
             operand_t * result = new operand_t(r);
 
