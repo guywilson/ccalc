@@ -52,6 +52,7 @@ class token_t {
         
         string  tokenString;
         int     length;
+        int     base;
 
     protected:
         token_t() {}
@@ -100,6 +101,14 @@ class token_t {
             length = (int)strlen(s);
         }
 
+        void setBase(int b) {
+            base = b;
+        }
+
+        int getBase() {
+            return base;
+        }
+        
         int getLength() {
             return length;
         }
@@ -215,6 +224,10 @@ class operand_t : public token_t {
             setType(token_operand);
         }
 
+        ~operand_t() {
+            mpfr_clear(value);
+        }
+
         mpfr_ptr getValue() {
             return value;
         }
@@ -259,6 +272,8 @@ class operator_plus_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+
             return result;
         }
 
@@ -284,6 +299,8 @@ class operator_minus_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -309,6 +326,8 @@ class operator_multiply_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -334,6 +353,8 @@ class operator_divide_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -359,6 +380,8 @@ class operator_modulus_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -384,6 +407,8 @@ class operator_power_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -409,6 +434,8 @@ class operator_root_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -438,6 +465,8 @@ class operator_AND_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -467,6 +496,8 @@ class operator_OR_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -496,6 +527,8 @@ class operator_XOR_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -525,6 +558,8 @@ class operator_LSHIFT_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -554,6 +589,8 @@ class operator_RSHIFT_t : public operator_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 
@@ -607,6 +644,8 @@ class function_sin_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -630,6 +669,8 @@ class function_cos_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -653,6 +694,8 @@ class function_tan_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -676,6 +719,8 @@ class function_asin_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -699,6 +744,8 @@ class function_acos_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -722,6 +769,8 @@ class function_atan_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -739,6 +788,8 @@ class function_sinh_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -756,6 +807,8 @@ class function_cosh_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -773,6 +826,8 @@ class function_tanh_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -790,6 +845,8 @@ class function_asinh_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -807,6 +864,8 @@ class function_acosh_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -824,6 +883,8 @@ class function_atanh_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -841,6 +902,8 @@ class function_sqrt_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -858,6 +921,8 @@ class function_factorial_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -875,6 +940,8 @@ class function_logarithm_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -892,6 +959,8 @@ class function_natural_log_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -908,6 +977,8 @@ class function_memory_t : public function_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -939,6 +1010,8 @@ class constant_pi_t : public constant_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -956,6 +1029,8 @@ class constant_euler_t : public constant_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -973,6 +1048,8 @@ class constant_c_t : public constant_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };
@@ -990,6 +1067,8 @@ class constant_G_t : public constant_t {
 
             operand_t * result = new operand_t(r);
 
+            mpfr_clear(r);
+            
             return result;
         }
 };

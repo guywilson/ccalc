@@ -153,7 +153,6 @@ bool tzrHasMoreTokens(tokenizer_t * t) {
 }
 
 token_t * tzrNextToken(tokenizer_t * t) {
-    token_t *           token;
     int                 tokenLength;
     int                 i;
     int                 j = 0;
@@ -173,7 +172,11 @@ token_t * tzrNextToken(tokenizer_t * t) {
 
     lgLogDebug("Got token '%s'", pszToken);
 
-    token = token_factory::createToken(pszToken);
+    token_t * token = token_factory::createToken(pszToken);
+
+    token->setBase(t->base);
+
+    free(pszToken);
 
     return token;
 }

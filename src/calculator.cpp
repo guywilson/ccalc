@@ -234,9 +234,7 @@ operand_t * evaluate(const char * pszExpression) {
     stack<token_t *> * stk = new stack<token_t *>();
 
     while (!tokenQueue.empty()) {
-        token_t * t;
-
-        t = queueGet();
+        token_t * t = queueGet();
 
         if (t->getType() == token_operand) {
             lgLogDebug("Got operand: '%s'", t->getTokenStr().c_str());
@@ -260,9 +258,9 @@ operand_t * evaluate(const char * pszExpression) {
 
             operand_t * result = f->evaluate(o1);
 
-            stackPush(stk, result);
-
             delete o1;
+
+            stackPush(stk, result);
         }
         else if (t->getType() == token_operator) {
             operand_t * o1;
@@ -275,10 +273,10 @@ operand_t * evaluate(const char * pszExpression) {
 
             operand_t * result = op->evaluate(o1, o2);
 
-            stackPush(stk, result);
-
             delete o1;
             delete o2;
+
+            stackPush(stk, result);
         }
     }
 

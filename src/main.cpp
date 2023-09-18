@@ -139,7 +139,7 @@ static const char * getTrigModeString(void) {
     return "";
 }
 
-static char * formatResult(token_t * result) {
+static char * formatResult(operand_t * result) {
     size_t              allocateLen = 0;
     char *              pszFormattedResult;
     int                 i;
@@ -154,12 +154,11 @@ static char * formatResult(token_t * result) {
     switch (getBase()) {
         case DECIMAL:
             if (allocateLen > 3) {
-                for (i = 0;i < allocateLen;i++) {
-                    if (result->getTokenStr()[i] == '.') {
-                        allocateLen += (i - 1) / 3;
-                        delimRangeLimit = i - 1;
-                        break;
-                    }
+                i = result->getTokenStr().find_first_of('.');
+
+                if (i < result->getLength()) {
+                    allocateLen += (i - 1) / 3;
+                    delimRangeLimit = i - 1;
                 }
             }
 
@@ -234,7 +233,7 @@ int main(int argc, char ** argv) {
     char                szPrompt[32];
     bool                loop = true;
     bool                doFormat = true;
-    operand_t *         result;
+    operand_t *         result = NULL;
 
     rl_bind_key('\t', rl_complete);
 
@@ -304,6 +303,7 @@ int main(int argc, char ** argv) {
             else if (strncmp(pszCalculation, "hex", 3) == 0) {
                 setBase(HEXADECIMAL);
                 setTrigMode(degrees);
+
                 printf("= 0x%08X\n", (unsigned int)strtoul(result->getTokenStr().c_str(), NULL, DECIMAL));
             }
             else if (strncmp(pszCalculation, "bin", 3) == 0) {
@@ -323,6 +323,10 @@ int main(int argc, char ** argv) {
             }
             else {
                 try {
+                    if (result != NULL) {
+                        delete result;
+                    }
+
                     result = evaluate(pszCalculation);
 
                     if (doFormat) {
@@ -344,4 +348,10 @@ int main(int argc, char ** argv) {
 
         free(pszCalculation);
     }
+
+    if (result != NULL) {
+        delete result;
+    }
+
+    return 0;
 }
