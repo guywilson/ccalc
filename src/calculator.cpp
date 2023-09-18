@@ -180,9 +180,7 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
         Pop the operator onto the output queue.
     */
     while (!operatorStack->empty()) {
-        token_t * stackToken;
-
-        stackToken = stackPop(operatorStack);
+        token_t * stackToken = stackPop(operatorStack);
 
         if (stackToken == NULL) {
             lgLogError("NULL item on stack");

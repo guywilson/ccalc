@@ -61,7 +61,7 @@ static int _findNextTokenPos(tokenizer_t * t) {
             */
             if (tokenLen > 0) {
                 // The token is the delimiter to another token...
-                return i - 1;
+                return i;
             }
             else {
                 /*
@@ -101,12 +101,12 @@ static int _findNextTokenPos(tokenizer_t * t) {
                         continue;
                     }
                     else {
-                        return i;
+                        return i + 1;
                     }
                 }
                 else {
                     // The token is the token we want to return...
-                    return i;
+                    return i + 1;
                 }
             }
         }
@@ -119,7 +119,7 @@ static int _findNextTokenPos(tokenizer_t * t) {
         ** of the expression...
         */
         if (i == (t->expressionLen - 1)) {
-            return i;
+            return i + 1;
         }
     }
 
@@ -145,7 +145,7 @@ bool tzrHasMoreTokens(tokenizer_t * t) {
     int pos = _findNextTokenPos(t);
 
     if (pos > 0) {
-        t->endIndex = pos + 1;
+        t->endIndex = pos;
         return true;
     }
 
