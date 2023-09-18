@@ -8,7 +8,7 @@
 #include <mpfr.h>
 
 #include "tokenizer.h"
-#include "token.h"
+#include "operand.h"
 #include "calc_error.h"
 #include "calculator.h"
 #include "system.h"

@@ -27,6 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <readline/history.h>
 
 #include "logger.h"
+#include "operand.h"
 #include "calc_error.h"
 #include "tokenizer.h"
 #include "calculator.h"

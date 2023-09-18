@@ -3,7 +3,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 
-#include "token.h"
+#include "operand.h"
 #include "calc_error.h"
 
 #ifndef __INCL_MEMORY

@@ -5,8 +5,13 @@
 #include <gmp.h>
 #include <mpfr.h>
 
-#include "token.h"
 #include "system.h"
+#include "token.h"
+#include "brace.h"
+#include "operand.h"
+#include "operator.h"
+#include "function.h"
+#include "constant.h"
 
 using namespace std;
 

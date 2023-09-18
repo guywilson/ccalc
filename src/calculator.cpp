@@ -14,6 +14,11 @@
 #include "calc_error.h"
 #include "tokenizer.h"
 #include "token.h"
+#include "operand.h"
+#include "operator.h"
+#include "brace.h"
+#include "function.h"
+#include "constant.h"
 #include "system.h"
 #include "calculator.h"
 
@@ -21,9 +26,6 @@ using namespace std;
 
 #define LIST_SIZE                   128
 #define STACK_SIZE                   64
-
-#define CONSTANT_C            299792458U
-#define CONSTANT_G                  "0.000000000066743"
 
 static queue<token_t *>             tokenQueue;
 
