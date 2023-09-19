@@ -35,6 +35,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "system.h"
 #include "memory.h"
 #include "test.h"
+#include "version.h"
 
 #define DEFAULT_LOG_LEVEL                       (LOG_LEVEL_FATAL | LOG_LEVEL_ERROR)
 
@@ -51,8 +52,13 @@ static void printBanner(void) {
     tmUpdate();
     year = tmGetYear();
 
-	printf("\nWelcome to CCALC. A cmd line scientific calculator. Copyright © Guy Wilson %d\n", year);
+	printf("\n*** Welcome to CCALC v%s ***\n\n", getVersion());
+    printf("A cmd line scientific calculator. Copyright © Guy Wilson %d\n", year);
 	printf("Type a calculation or command at the prompt, type 'help' for info.\n\n");
+}
+
+static void printVersion(void) {
+    printf("CCALC version '%s' - built [%s]\n\n", getVersion(), getBuildDate());
 }
 
 static void printUsage(void) {
@@ -102,6 +108,7 @@ static void printUsage(void) {
     printf("\tfmtoff\tTurn off output formatting\n");
     printf("\thelp\tThis help text\n");
     printf("\ttest\tRun a self test of the calculator\n");
+    printf("\tversion\tPrint the calculator version\n");
     printf("\texit\tExit the calculator\n\n");
 }
 
@@ -272,6 +279,9 @@ int main(int argc, char ** argv) {
             }
             else if (strncmp(pszCalculation, "help", 4) == 0) {
                 printUsage();
+            }
+            else if (strncmp(pszCalculation, "version", 7) == 0) {
+                printVersion();
             }
             else if (strncmp(pszCalculation, "test", 4) == 0) {
                 return test();

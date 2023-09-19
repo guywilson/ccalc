@@ -6,9 +6,9 @@
 #                                                                             #
 ###############################################################################
 
-# Version number for WCTL
-MAJOR_VERSION = 0
-MINOR_VERSION = 1
+# Version number for CCALC
+MAJOR_VERSION = 1
+MINOR_VERSION = 0
 
 # Directories
 SOURCE = src
@@ -19,6 +19,7 @@ DEP = dep
 TARGET = ccalc
 
 # Tools
+VBUILD = vbuild
 C = gcc
 CPP = g++
 LINKER = g++
@@ -81,6 +82,9 @@ $(DEP)/%.d: ;
 
 install: $(TARGET)
 	cp $(TARGET) /usr/local/bin
+
+version:
+	$(VBUILD) -incfile ccalc.ver -template version.c.template -out $(SOURCE)/version.c -major $(MAJOR_VERSION) -minor $(MINOR_VERSION)
 
 clean:
 	rm -r $(BUILD)
