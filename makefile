@@ -32,7 +32,7 @@ CFLAGS_BASE=-c -Wall -pedantic
 CFLAGS_REL=$(CFLAGS_BASE) -O2
 CFLAGS_DBG=$(CFLAGS_BASE) -g
 
-CPPFLAGS_BASE = -c -Wall -pedantic -std=c++11
+CPPFLAGS_BASE = -c -Wall -pedantic -std=c++17
 CPPFLAGS_REL=$(CPPFLAGS_BASE) -O2
 CPPFLAGS_DBG=$(CPPFLAGS_BASE) -g
 
