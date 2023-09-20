@@ -102,6 +102,94 @@ class operand_t : public token_t {
         ~operand_t() {
             mpfr_clear(value);
         }
+
+        char * formattedString(int outputBase) {
+            size_t              allocateLen = 0;
+            char *              pszFormattedResult;
+            int                 i;
+            int                 j;
+            char                delimiter = 0;
+            int                 delimPos = 0;
+            int                 digitCount = 0;
+            int                 delimRangeLimit = 0;
+
+            allocateLen = getLength();
+
+            switch (outputBase) {
+                case DECIMAL:
+                    if (allocateLen > 3) {
+                        i = getTokenStr().find_first_of('.');
+
+                        if (i < (int)getLength()) {
+                            allocateLen += (i - 1) / 3;
+                            delimRangeLimit = i - 1;
+                        }
+                    }
+
+                    delimiter = ',';
+                    delimPos = 3;
+                    break;
+
+                case BINARY:
+                    if (allocateLen > 8) {
+                        allocateLen += ((allocateLen / 8) - 1);
+                    }
+
+                    delimiter = ' ';
+                    delimPos = 8;
+                    break;
+
+                case OCTAL:
+                    delimiter = 0;
+                    break;
+
+                case HEXADECIMAL:
+                    if (allocateLen > 4) {
+                        allocateLen += ((allocateLen / 4));
+                    }
+
+                    delimiter = ' ';
+                    delimPos = 4;
+                    break;
+            }
+
+            pszFormattedResult = (char *)malloc(allocateLen + 1);
+            memset(pszFormattedResult, delimiter, allocateLen);
+
+            pszFormattedResult[allocateLen] = 0;
+
+            if (allocateLen > getLength() && outputBase != OCTAL) {
+                if (outputBase != DECIMAL) {
+                    delimRangeLimit = getLength() - 1;
+                }
+                
+                i = allocateLen - 1;
+                j = getLength() - 1;
+
+                digitCount = delimPos;
+
+                while (j >= 0) {
+                    pszFormattedResult[i] = getTokenStr()[j];
+
+                    if (j <= delimRangeLimit) {
+                        digitCount--;
+
+                        if (digitCount == 0) {
+                            i--;
+                            digitCount = delimPos;
+                        }
+                    }
+
+                    i--;
+                    j--;
+                }
+            }
+            else {
+                strncpy(pszFormattedResult, getTokenStr().c_str(), getLength());
+            }
+
+            return pszFormattedResult;
+        }
 };
 
 #endif

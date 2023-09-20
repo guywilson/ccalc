@@ -152,96 +152,6 @@ static const char * getTrigModeString(void) {
     return "";
 }
 
-static char * formatResult(operand_t * result) {
-    size_t              allocateLen = 0;
-    char *              pszFormattedResult;
-    int                 i;
-    int                 j;
-    char                delimiter = 0;
-    int                 delimPos = 0;
-    int                 digitCount = 0;
-    int                 delimRangeLimit = 0;
-
-    allocateLen = result->getLength();
-
-    system_t & sys = system_t::getInstance();
-
-    switch (sys.getBase()) {
-        case DECIMAL:
-            if (allocateLen > 3) {
-                i = result->getTokenStr().find_first_of('.');
-
-                if (i < result->getLength()) {
-                    allocateLen += (i - 1) / 3;
-                    delimRangeLimit = i - 1;
-                }
-            }
-
-            delimiter = ',';
-            delimPos = 3;
-            break;
-
-        case BINARY:
-            if (allocateLen > 8) {
-                allocateLen += ((allocateLen / 8) - 1);
-            }
-
-            delimiter = ' ';
-            delimPos = 8;
-            break;
-
-        case OCTAL:
-            delimiter = 0;
-            break;
-
-        case HEXADECIMAL:
-            if (allocateLen > 4) {
-                allocateLen += ((allocateLen / 4));
-            }
-
-            delimiter = ' ';
-            delimPos = 4;
-            break;
-    }
-
-    pszFormattedResult = (char *)malloc(allocateLen + 1);
-    memset(pszFormattedResult, delimiter, allocateLen);
-
-    pszFormattedResult[allocateLen] = 0;
-
-    if (allocateLen > result->getLength() && sys.getBase() != OCTAL) {
-        if (sys.getBase() != DECIMAL) {
-            delimRangeLimit = result->getLength() - 1;
-        }
-        
-        i = allocateLen - 1;
-        j = result->getLength() - 1;
-
-        digitCount = delimPos;
-
-        while (j >= 0) {
-            pszFormattedResult[i] = result->getTokenStr()[j];
-
-            if (j <= delimRangeLimit) {
-                digitCount--;
-
-                if (digitCount == 0) {
-                    i--;
-                    digitCount = delimPos;
-                }
-            }
-
-            i--;
-            j--;
-        }
-    }
-    else {
-        strncpy(pszFormattedResult, result->getTokenStr().c_str(), result->getLength());
-    }
-
-    return pszFormattedResult;
-}
-
 int main(int argc, char ** argv) {
     char *              pszCalculation;
     char *              pszFormattedResult;
@@ -319,22 +229,35 @@ int main(int argc, char ** argv) {
             }
             else if (strncmp(pszCalculation, "dec", 3) == 0) {
                 sys.setBase(DECIMAL);
-                printf("= %s\n", result->getTokenStr().c_str());
+                
+                if (result != NULL) {
+                    printf("= %s\n", result->formattedString(sys.getBase()));
+                }
             }
             else if (strncmp(pszCalculation, "hex", 3) == 0) {
                 sys.setBase(HEXADECIMAL);
                 sys.setTrigMode(degrees);
 
-                printf("= 0x%08X\n", (unsigned int)strtoul(result->getTokenStr().c_str(), NULL, DECIMAL));
+                if (result != NULL) {
+                    printf("= %s\n", result->formattedString(sys.getBase()));
+                }
             }
             else if (strncmp(pszCalculation, "bin", 3) == 0) {
                 sys.setBase(BINARY);
                 sys.setTrigMode(degrees);
+
+                if (result != NULL) {
+                    printf("= %s\n", result->formattedString(sys.getBase()));
+                }
             }
             else if (strncmp(pszCalculation, "oct", 3) == 0) {
                 sys.setBase(OCTAL);
                 sys.setTrigMode(degrees);
-                printf("= 0o%o\n", (unsigned int)strtoul(result->getTokenStr().c_str(), NULL, DECIMAL));
+
+                if (result != NULL) {
+                    printf("= %s\n", result->formattedString(sys.getBase()));
+                }
+//                printf("= 0o%o\n", (unsigned int)strtoul(result->getTokenStr().c_str(), NULL, DECIMAL));
             }
             else if (strncmp(pszCalculation, "deg", 3) == 0) {
                 sys.setTrigMode(degrees);
@@ -351,7 +274,7 @@ int main(int argc, char ** argv) {
                     result = evaluate(pszCalculation);
 
                     if (doFormat) {
-                        pszFormattedResult = formatResult(result);
+                        pszFormattedResult = result->formattedString(sys.getBase());
 
                         printf("%s = %s\n", pszCalculation, pszFormattedResult);
 
