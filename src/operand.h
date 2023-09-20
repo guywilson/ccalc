@@ -6,6 +6,7 @@
 
 #include "system.h"
 #include "token.h"
+#include "utils.h"
 #include "logger.h"
 
 using namespace std;
@@ -13,50 +14,59 @@ using namespace std;
 #ifndef __INCL_OPERAND
 #define __INCL_OPERAND
 
-#define BASE_10                 10
-#define BASE_16                 16
-#define BASE_8                   8
-#define BASE_2                   2
+#define FORMAT_STRING_LENGTH             32
+#define OUTPUT_MAX_STRING_LENGTH        256
 
-#define DECIMAL                 BASE_10
-#define HEXADECIMAL             BASE_16
-#define OCTAL                   BASE_8
-#define BINARY                  BASE_2
+#define BASE_10                          10
+#define BASE_16                          16
+#define BASE_8                            8
+#define BASE_2                            2
+
+#define DECIMAL                         BASE_10
+#define HEXADECIMAL                     BASE_16
+#define OCTAL                           BASE_8
+#define BINARY                          BASE_2
 
 class operand_t : public token_t {
     private:
         mpfr_t      value;
+        string      outputStr;
+        string      formattedString;
         int         base;
+
+        system_t &  sys = system_t::getInstance();
+
+        void setBase(int b) {
+            base = b;
+        }
 
     protected:
         void setValue(const char * s) {
             mpfr_init2(value, getBasePrecision());
-            mpfr_strtofr(value, s, NULL, 10, MPFR_RNDA);
+            mpfr_strtofr(value, s, NULL, sys.getBase(), MPFR_RNDA);
+
+            setBase(sys.getBase());
         }
 
         void setValue(mpfr_ptr m) {
-            char    szFormatStr[32];
-            char    s[128];
+            char    szFormatStr[FORMAT_STRING_LENGTH];
+            char    s[OUTPUT_MAX_STRING_LENGTH];
 
             mpfr_init2(value, getBasePrecision());
             mpfr_set(value, m, MPFR_RNDA);
 
-            system_t & sys = system_t::getInstance();
-            snprintf(szFormatStr, 32, "%%.%ldRf", (long)sys.getPrecision());
+            snprintf(szFormatStr, FORMAT_STRING_LENGTH, "%%.%ldRf", (long)sys.getPrecision());
             mpfr_sprintf(s, szFormatStr, m);
             setTokenStr(s);
         }
 
         void setValue(operand_t * o) {
             setValue(o->getValue());
+            setBase(o->getBase());
         }
 
         int getBase() {
             return base;
-        }
-
-        void setBase(int b) {
-            base = b;
         }
 
     public:
@@ -103,7 +113,35 @@ class operand_t : public token_t {
             mpfr_clear(value);
         }
 
-        char * formattedString(int outputBase) {
+        string & toString(int outputBase) {
+            char    szOutputString[OUTPUT_MAX_STRING_LENGTH];
+            char    szFormatString[FORMAT_STRING_LENGTH];
+
+            switch (outputBase) {
+                case DECIMAL:
+                    snprintf(szFormatString, FORMAT_STRING_LENGTH, "%%.%ldRf", (long)sys.getPrecision());
+                    mpfr_snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, szFormatString, getValue());
+                    break;
+
+                case HEXADECIMAL:
+                    snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%08lX", mpfr_get_ui(getValue(), MPFR_RNDA));
+                    break;
+
+                case OCTAL:
+                    snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%016lo", mpfr_get_ui(getValue(), MPFR_RNDA));
+                    break;
+
+                case BINARY:
+                    snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%s", getBase2String(mpfr_get_ui(getValue(), MPFR_RNDA)));
+                    break;
+            }
+
+            outputStr.assign(szOutputString, OUTPUT_MAX_STRING_LENGTH);
+
+            return outputStr;
+        }
+
+        string & toFormattedString(int outputBase) {
             size_t              allocateLen = 0;
             char *              pszFormattedResult;
             int                 i;
@@ -113,14 +151,16 @@ class operand_t : public token_t {
             int                 digitCount = 0;
             int                 delimRangeLimit = 0;
 
-            allocateLen = getLength();
+            formattedString.assign(toString(outputBase));
+
+            allocateLen = formattedString.length();
 
             switch (outputBase) {
                 case DECIMAL:
                     if (allocateLen > 3) {
-                        i = getTokenStr().find_first_of('.');
+                        i = formattedString.find_first_of('.');
 
-                        if (i < (int)getLength()) {
+                        if (i < (int)formattedString.length()) {
                             allocateLen += (i - 1) / 3;
                             delimRangeLimit = i - 1;
                         }
@@ -131,12 +171,12 @@ class operand_t : public token_t {
                     break;
 
                 case BINARY:
-                    if (allocateLen > 8) {
-                        allocateLen += ((allocateLen / 8) - 1);
+                    if (allocateLen > 4) {
+                        allocateLen += ((allocateLen / 4) - 1);
                     }
 
                     delimiter = ' ';
-                    delimPos = 8;
+                    delimPos = 4;
                     break;
 
                 case OCTAL:
@@ -169,7 +209,7 @@ class operand_t : public token_t {
                 digitCount = delimPos;
 
                 while (j >= 0) {
-                    pszFormattedResult[i] = getTokenStr()[j];
+                    pszFormattedResult[i] = formattedString[j];
 
                     if (j <= delimRangeLimit) {
                         digitCount--;
@@ -188,7 +228,9 @@ class operand_t : public token_t {
                 strncpy(pszFormattedResult, getTokenStr().c_str(), getLength());
             }
 
-            return pszFormattedResult;
+            formattedString.assign(pszFormattedResult, allocateLen);
+
+            return formattedString;
         }
 };
 

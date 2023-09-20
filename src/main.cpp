@@ -154,10 +154,10 @@ static const char * getTrigModeString(void) {
 
 int main(int argc, char ** argv) {
     char *              pszCalculation;
-    char *              pszFormattedResult;
+    const char *        pszFormattedResult;
     char                szPrompt[32];
     bool                loop = true;
-    bool                doFormat = true;
+    bool                doFormat = false;
     operand_t *         result = NULL;
 
     rl_bind_key('\t', rl_complete);
@@ -231,7 +231,12 @@ int main(int argc, char ** argv) {
                 sys.setBase(DECIMAL);
                 
                 if (result != NULL) {
-                    printf("= %s\n", result->formattedString(sys.getBase()));
+                    if (doFormat) {
+                        printf("= %s\n", result->toFormattedString(sys.getBase()).c_str());
+                    }
+                    else {
+                        printf("= %s\n", result->toString(sys.getBase()).c_str());
+                    }
                 }
             }
             else if (strncmp(pszCalculation, "hex", 3) == 0) {
@@ -239,7 +244,12 @@ int main(int argc, char ** argv) {
                 sys.setTrigMode(degrees);
 
                 if (result != NULL) {
-                    printf("= %s\n", result->formattedString(sys.getBase()));
+                    if (doFormat) {
+                        printf("= %s\n", result->toFormattedString(sys.getBase()).c_str());
+                    }
+                    else {
+                        printf("= %s\n", result->toString(sys.getBase()).c_str());
+                    }
                 }
             }
             else if (strncmp(pszCalculation, "bin", 3) == 0) {
@@ -247,7 +257,12 @@ int main(int argc, char ** argv) {
                 sys.setTrigMode(degrees);
 
                 if (result != NULL) {
-                    printf("= %s\n", result->formattedString(sys.getBase()));
+                    if (doFormat) {
+                        printf("= %s\n", result->toFormattedString(sys.getBase()).c_str());
+                    }
+                    else {
+                        printf("= %s\n", result->toString(sys.getBase()).c_str());
+                    }
                 }
             }
             else if (strncmp(pszCalculation, "oct", 3) == 0) {
@@ -255,9 +270,13 @@ int main(int argc, char ** argv) {
                 sys.setTrigMode(degrees);
 
                 if (result != NULL) {
-                    printf("= %s\n", result->formattedString(sys.getBase()));
+                    if (doFormat) {
+                        printf("= %s\n", result->toFormattedString(sys.getBase()).c_str());
+                    }
+                    else {
+                        printf("= %s\n", result->toString(sys.getBase()).c_str());
+                    }
                 }
-//                printf("= 0o%o\n", (unsigned int)strtoul(result->getTokenStr().c_str(), NULL, DECIMAL));
             }
             else if (strncmp(pszCalculation, "deg", 3) == 0) {
                 sys.setTrigMode(degrees);
@@ -274,11 +293,9 @@ int main(int argc, char ** argv) {
                     result = evaluate(pszCalculation);
 
                     if (doFormat) {
-                        pszFormattedResult = result->formattedString(sys.getBase());
+                        pszFormattedResult = result->toFormattedString(sys.getBase()).c_str();
 
                         printf("%s = %s\n", pszCalculation, pszFormattedResult);
-
-                        free(pszFormattedResult);
                     }
                     else {
                         printf("%s = %s\n", pszCalculation, result->getTokenStr().c_str());
