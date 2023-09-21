@@ -132,7 +132,9 @@ class operand_t : public token_t {
                     break;
 
                 case BINARY:
-                    snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%s", getBase2String(mpfr_get_ui(getValue(), MPFR_RNDA)));
+                    char * binaryStr = getBase2String(mpfr_get_ui(getValue(), MPFR_RNDA));
+                    snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%s", binaryStr);
+                    free(binaryStr);
                     break;
             }
 

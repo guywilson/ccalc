@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-const char *        getBase2String(uint32_t value);
+char *          getBase2String(uint32_t value);
 
 #ifdef __cplusplus
 }

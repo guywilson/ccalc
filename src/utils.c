@@ -7,7 +7,7 @@
 
 #define BASE2_OUTPUT_LEN                        (sizeof(uint32_t) * 8)
 
-const char * getBase2String(uint32_t value) {
+char * getBase2String(uint32_t value) {
     char        szBinaryString[BASE2_OUTPUT_LEN + 1];
     char        szOutputString[BASE2_OUTPUT_LEN + 1];
     int         i = BASE2_OUTPUT_LEN - 1;
