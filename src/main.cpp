@@ -39,7 +39,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define DEFAULT_LOG_LEVEL                       (LOG_LEVEL_FATAL | LOG_LEVEL_ERROR)
 
-#define DEFAULT_PRECISION                       2
+#define DEFAULT_PRECISION                        2
+#define MAX_PRECISION                           80
 
 const char * pszWarranty = 
     "This program comes with ABSOLUTELY NO WARRANTY.\n" \
@@ -158,6 +159,7 @@ int main(int argc, char ** argv) {
     char                szPrompt[32];
     bool                loop = true;
     bool                doFormat = true;
+    long                precision = 2L;
     operand_t *         result = NULL;
 
     rl_bind_key('\t', rl_complete);
@@ -197,7 +199,14 @@ int main(int argc, char ** argv) {
                 return test();
             }
             else if (strncmp(pszCalculation, "setp", 4) == 0) {
-                sys.setPrecision(strtol(&pszCalculation[4], NULL, BASE_10));
+                precision = strtol(&pszCalculation[4], NULL, BASE_10);
+
+                if (precision < 0 || precision > MAX_PRECISION) {
+                    fprintf(stderr, "Precision must be between 0 and %d\n", MAX_PRECISION);
+                }
+                else {
+                    sys.setPrecision(precision);
+                }
             }
             else if (strncmp(pszCalculation, "dbgon", 5) == 0) {
                 lgSetLogLevel(LOG_LEVEL_ALL);
