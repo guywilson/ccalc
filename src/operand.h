@@ -128,7 +128,7 @@ class operand_t : public token_t {
                     break;
 
                 case OCTAL:
-                    snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%016lo", mpfr_get_ui(getValue(), MPFR_RNDA));
+                    snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%lo", mpfr_get_ui(getValue(), MPFR_RNDA));
                     break;
 
                 case BINARY:
@@ -142,93 +142,74 @@ class operand_t : public token_t {
         }
 
         string & toFormattedString(int outputBase) {
-            size_t              allocateLen = 0;
-            char *              pszFormattedResult;
-            int                 i;
-            int                 j;
-            char                delimiter = 0;
-            int                 delimPos = 0;
-            int                 digitCount = 0;
-            int                 delimRangeLimit = 0;
+            const char *    pszIn;
+            char *          pszOut;
+            int             delim_char;
+            int             delim_char_count = 0;
+            int             startIndex = 0;
+            int             tgtIndex = 0;
+            int             srcIndex = 0;
+            int             digitCount = 0;
+            size_t          oldLength;
+            size_t          newLength;
+            bool            hasDelimiters = false;
 
-            formattedString.assign(toString(outputBase));
-
-            allocateLen = formattedString.length();
+            pszIn = toString(outputBase).c_str();
+            oldLength = strlen(pszIn);
+            newLength = oldLength;
 
             switch (outputBase) {
                 case DECIMAL:
-                    if (allocateLen > 3) {
-                        i = formattedString.find_first_of('.');
-
-                        if (i < (int)formattedString.length()) {
-                            allocateLen += (i - 1) / 3;
-                            delimRangeLimit = i - 1;
-                        }
-                    }
-
-                    delimiter = ',';
-                    delimPos = 3;
+                    delim_char = ',';
+                    delim_char_count = 3;
+                    startIndex = outputStr.find_first_of('.') - 1;
                     break;
 
                 case BINARY:
-                    if (allocateLen > 4) {
-                        allocateLen += ((allocateLen / 4) - 1);
-                    }
-
-                    delimiter = ' ';
-                    delimPos = 4;
-                    break;
-
-                case OCTAL:
-                    delimiter = 0;
-                    break;
-
                 case HEXADECIMAL:
-                    if (allocateLen > 4) {
-                        allocateLen += ((allocateLen / 4));
-                    }
-
-                    delimiter = ' ';
-                    delimPos = 4;
+                case OCTAL:
+                    delim_char = ' ';
+                    delim_char_count = 4;
+                    startIndex = oldLength - 1;
                     break;
             }
 
-            pszFormattedResult = (char *)malloc(allocateLen + 1);
-            memset(pszFormattedResult, delimiter, allocateLen);
+            if ((startIndex + 1) > delim_char_count) {
+                hasDelimiters = true;
+                newLength += (startIndex + 1) / delim_char_count;
 
-            pszFormattedResult[allocateLen] = 0;
-
-            if (allocateLen > getLength() && outputBase != OCTAL) {
-                if (outputBase != DECIMAL) {
-                    delimRangeLimit = getLength() - 1;
+                if ((startIndex + 1) % delim_char_count == 0) {
+                    newLength--;
                 }
-                
-                i = allocateLen - 1;
-                j = getLength() - 1;
+            }
 
-                digitCount = delimPos;
+            lgLogDebug("toFormattedString(): oldLen:%u, newLen:%u, start:%d", oldLength, newLength, startIndex);
 
-                while (j >= 0) {
-                    pszFormattedResult[i] = formattedString[j];
+            pszOut = (char *)malloc(newLength);
 
-                    if (j <= delimRangeLimit) {
-                        digitCount--;
+            if (hasDelimiters) {
+                tgtIndex = startIndex + (newLength - oldLength);
+                srcIndex = startIndex;
 
-                        if (digitCount == 0) {
-                            i--;
-                            digitCount = delimPos;
-                        }
+                strncpy(&pszOut[newLength - oldLength], pszIn, oldLength);
+
+                while (srcIndex >= 0) {
+                    lgLogDebug("srcIndex:%d, tgtIndex:%d, digitCount:%d", srcIndex, tgtIndex, digitCount);
+                    
+                    if (digitCount == delim_char_count) {
+                        pszOut[tgtIndex--] = delim_char;
+                        digitCount = 0;
                     }
-
-                    i--;
-                    j--;
+                    
+                    pszOut[tgtIndex--] = pszIn[srcIndex--];
+                    digitCount++;
                 }
             }
             else {
-                strncpy(pszFormattedResult, getTokenStr().c_str(), getLength());
+                strncpy(pszOut, pszIn, oldLength);
             }
 
-            formattedString.assign(pszFormattedResult, allocateLen);
+            formattedString.assign(pszOut);
 
             return formattedString;
         }

@@ -157,7 +157,7 @@ int main(int argc, char ** argv) {
     const char *        pszFormattedResult;
     char                szPrompt[32];
     bool                loop = true;
-    bool                doFormat = false;
+    bool                doFormat = true;
     operand_t *         result = NULL;
 
     rl_bind_key('\t', rl_complete);
