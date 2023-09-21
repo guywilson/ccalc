@@ -172,6 +172,11 @@ class operand_t : public token_t {
                     delim_char_count = 4;
                     startIndex = oldLength - 1;
                     break;
+
+                default:
+                    delim_char = ' ';
+                    delim_char_count = 4;
+                    startIndex = oldLength - 1;
             }
 
             if ((startIndex + 1) > delim_char_count) {
