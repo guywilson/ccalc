@@ -49,15 +49,12 @@ class operand_t : public token_t {
         }
 
         void setValue(mpfr_ptr m) {
-            char    szFormatStr[FORMAT_STRING_LENGTH];
-            char    s[OUTPUT_MAX_STRING_LENGTH];
-
             mpfr_init2(value, getBasePrecision());
             mpfr_set(value, m, MPFR_RNDA);
 
-            snprintf(szFormatStr, FORMAT_STRING_LENGTH, "%%.%ldRf", (long)sys.getPrecision());
-            mpfr_sprintf(s, szFormatStr, m);
-            setTokenStr(s);
+            setBase(sys.getBase());
+
+            setTokenStr(toString(sys.getBase()));
         }
 
         void setValue(operand_t * o) {

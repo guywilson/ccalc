@@ -98,19 +98,11 @@ class token_factory {
         }
 
         static bool isOperatorLeftShift(const char * pszToken) {
-            if (strncmp(pszToken, "<<", 2) == 0) {
-                return true;
-            }
-
-            return false;
+            return (pszToken[0] == '<');
         }
 
         static bool isOperatorRightShift(const char * pszToken) {
-            if (strncmp(pszToken, ">>", 2) == 0) {
-                return true;
-            }
-
-            return false;
+            return (pszToken[0] == '>');
         }
 
         static bool isConstantPi(const char * pszToken) {

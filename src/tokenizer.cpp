@@ -12,7 +12,7 @@
 
 static bool isdelim(char ch) {
     int                     i;
-    static const char *     pszDelimiters = " \t\n\r+-*/^:%&|~()[]{}";
+    static const char *     pszDelimiters = " \t\n\r+-*/^:%&|~<>()[]{}";
 
     for (i = 0;i < (int)strlen(pszDelimiters);i++) {
         if (ch == pszDelimiters[i]) {

@@ -196,7 +196,11 @@ int main(int argc, char ** argv) {
                 printVersion();
             }
             else if (strncmp(pszCalculation, "test", 4) == 0) {
-                return test();
+                int numTestsFailed = test();
+
+                if (numTestsFailed) {
+                    fprintf(stderr, "Self-test failed with %d failures\n\n", numTestsFailed);
+                }
             }
             else if (strncmp(pszCalculation, "setp", 4) == 0) {
                 precision = strtol(&pszCalculation[4], NULL, BASE_10);

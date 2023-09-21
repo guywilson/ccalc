@@ -16,7 +16,9 @@
 static bool testEvaluate(const char * pszCalculation, const char * pszExpectedResult) {
     operand_t *     r;
     bool            success;
-    char *          pszResult;
+    const char *    pszResult;
+
+    system_t & sys = system_t::getInstance();
 
     try {
         r = evaluate(pszCalculation);
@@ -26,7 +28,7 @@ static bool testEvaluate(const char * pszCalculation, const char * pszExpectedRe
         return false;
     }
 
-    pszResult = strndup(r->getTokenStr().c_str(), strlen(pszExpectedResult));
+    pszResult = r->toString(sys.getBase()).c_str();
 
     if (strncmp(pszResult, pszExpectedResult, strlen(pszExpectedResult)) == 0) {
         printf("**** Success :) - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, pszResult);
@@ -103,6 +105,26 @@ int test(void) {
     sys.setPrecision(2U);
     sys.setBase(DECIMAL);
     testEvaluate("fact(12) + 13", "479001613.0") ? numTestsPassed++ : numTestsFailed++;
+    totalTests++;
+
+    sys.setPrecision(0U);
+    sys.setBase(HEXADECIMAL);
+    testEvaluate("(F100 < 3) + (AA > 1)", "00078855") ? numTestsPassed++ : numTestsFailed++;
+    totalTests++;
+
+    sys.setPrecision(0U);
+    sys.setBase(BINARY);
+    testEvaluate("10101010 | 1010101", "11111111") ? numTestsPassed++ : numTestsFailed++;
+    totalTests++;
+
+    sys.setPrecision(0U);
+    sys.setBase(BINARY);
+    testEvaluate("(1 < 111) | (1 < 110) | (1 < 101) | (1 < 100) | (1 < 11) | (1 < 10) | (1 < 1) | 1", "11111111") ? numTestsPassed++ : numTestsFailed++;
+    totalTests++;
+
+    sys.setPrecision(2U);
+    sys.setBase(DECIMAL);
+    testEvaluate("asin(sin(90)) + acos(cos(90))", "180.00") ? numTestsPassed++ : numTestsFailed++;
     totalTests++;
 
     printf("\nTest: %d tests failed, %d tests passed out of %d total\n\n", numTestsFailed, numTestsPassed, totalTests);
