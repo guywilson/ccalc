@@ -189,7 +189,12 @@ class operand_t : public token_t {
 
             lgLogDebug("toFormattedString(): oldLen:%u, newLen:%u, start:%d", oldLength, newLength, startIndex);
 
-            pszOut = (char *)malloc(newLength);
+            pszOut = (char *)malloc(newLength + 1);
+
+            /*
+            ** Make sure the string is null terminated...
+            */
+            pszOut[newLength] = 0;
 
             if (hasDelimiters) {
                 tgtIndex = startIndex + (newLength - oldLength);
@@ -211,6 +216,12 @@ class operand_t : public token_t {
             }
             else {
                 strncpy(pszOut, pszIn, oldLength);
+            }
+
+            lgLogDebug("Built formatted string '%s'", pszOut);
+
+            if (lgCheckLogLevel(LOG_LEVEL_DEBUG)) {
+                hexDump(pszOut, newLength + 1);
             }
 
             formattedString.assign(pszOut);

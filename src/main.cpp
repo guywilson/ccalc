@@ -69,7 +69,7 @@ static void printUsage(void) {
     printf("Operators supported:\n");
     printf("\t+, -, *, /, %% (Modulo)\n");
     printf("\t& (AND), | (OR), ~ (XOR)\n");
-    printf("\t<< (left shift), >> (right shift)\n");
+    printf("\t< (left shift), > (right shift)\n");
     printf("\t^ (power, e.g. x to the power of y)\n");
     printf("\t: (root, e.g. x : y - the yth root of x)\n\n");
     printf("\tNesting is achieved with braces ()\n\n");
@@ -155,7 +155,6 @@ static const char * getTrigModeString(void) {
 
 int main(int argc, char ** argv) {
     char *              pszCalculation;
-    const char *        pszFormattedResult;
     char                szPrompt[32];
     bool                loop = true;
     bool                doFormat = true;
@@ -306,12 +305,14 @@ int main(int argc, char ** argv) {
                     result = evaluate(pszCalculation);
 
                     if (doFormat) {
-                        pszFormattedResult = result->toFormattedString(sys.getBase()).c_str();
-
-                        printf("%s = %s\n", pszCalculation, pszFormattedResult);
+                        printf("%s = %s\n", 
+                                    pszCalculation, 
+                                    result->toFormattedString(sys.getBase()).c_str());
                     }
                     else {
-                        printf("%s = %s\n", pszCalculation, result->getTokenStr().c_str());
+                        printf("%s = %s\n", 
+                                    pszCalculation, 
+                                    result->toString(sys.getBase()).c_str());
                     }
                 }
                 catch (calc_error & e) {
