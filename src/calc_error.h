@@ -83,4 +83,15 @@ class stack_error : public calc_error {
         stack_error(const char * msg, const char * file, int line) : calc_error(msg, file, line) {}
 };
 
+class invalid_token_error : public calc_error {
+    public:
+        const char * getTitle() {
+            return "Invalid token error: ";
+        }
+
+        invalid_token_error() : calc_error() {}
+        invalid_token_error(const char * msg) : calc_error(msg) {}
+        invalid_token_error(const char * msg, const char * file, int line) : calc_error(msg, file, line) {}
+};
+
 #endif

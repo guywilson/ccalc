@@ -414,7 +414,12 @@ class token_factory {
                 return new function_memory_t(pszToken);
             }
             else {
-                return NULL;
+                throw invalid_token_error(
+                        calc_error::buildMsg(
+                            "Invalid token '%s', see help.", 
+                            pszToken), 
+                            __FILE__, 
+                            __LINE__);
             }
         }
 };
