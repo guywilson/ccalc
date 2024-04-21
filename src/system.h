@@ -1,55 +1,26 @@
-#include <stdlib.h>
-
 #include <gmp.h>
 #include <mpfr.h>
 
 #ifndef __INCL_SYSTEM
 #define __INCL_SYSTEM
 
-typedef enum {
-    radians,
-    degrees
+#define getBasePrecision()                      1024L
+
+#define DEFAULT_PRECISION                        2
+#define MAX_PRECISION                           80
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void        setPrecision(mpfr_prec_t p);
+mpfr_prec_t getPrecision(void);
+void        memInit(void);
+void        memRetrieve(mpfr_t m, int location);
+void        memStore(mpfr_t m, int location);
+
+#ifdef __cplusplus
 }
-trig_mode_t;
-
-class system_t {
-    public:
-        static system_t & getInstance() {
-            static system_t sys;
-            return sys;
-        }
-
-    private:
-        system_t() {}
-
-        int             base;
-        mpfr_prec_t     precision;
-        trig_mode_t     mode;
-
-    public:
-        void setBase(int b) {
-            base = b;
-        }
-
-        int getBase() {
-            return base;
-        }
-
-        void setPrecision(mpfr_prec_t p) {
-            precision = p;
-        }
-
-        mpfr_prec_t getPrecision() {
-            return precision;
-        }
-
-        void setTrigMode(trig_mode_t m) {
-            mode = m;
-        }
-
-        trig_mode_t getTrigMode() {
-            return mode;
-        }
-};
+#endif
 
 #endif

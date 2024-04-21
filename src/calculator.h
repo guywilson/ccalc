@@ -1,5 +1,9 @@
+#include <string>
+#include <cstring>
+#include <queue>
+#include <stack>
+
 #include "tokenizer.h"
-#include "token.h"
 
 #ifndef __INCL_CALCULATOR
 #define __INCL_CALCULATOR
@@ -14,8 +18,8 @@
 #define ERROR_EVALUATE_UNEXPECTED_TOKENS                -7
 #define ERROR_EVALUATE_NULL_STACK_POP                   -8
 
-void            memoryStore(operand_t * t, int memoryLocation);
-operand_t *     memoryFetch(int memoryLocation);
-operand_t *     evaluate(const char * pszExpression);
+string &    toString(mpfr_t value, int outputBase);
+string &    toFormattedString(mpfr_t value, int outputBase);
+void        evaluate(mpfr_t result, const char * pszExpression, int radix);
 
 #endif

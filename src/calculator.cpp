@@ -1,7 +1,5 @@
 #include <string>
 #include <cstring>
-#include <queue>
-#include <stack>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,14 +10,12 @@
 
 #include "logger.h"
 #include "calc_error.h"
+#include "system.h"
 #include "tokenizer.h"
-#include "token.h"
-#include "operand.h"
+#include "questack.h"
 #include "operator.h"
-#include "brace.h"
 #include "function.h"
 #include "constant.h"
-#include "system.h"
 #include "calculator.h"
 
 using namespace std;
@@ -27,66 +23,172 @@ using namespace std;
 #define LIST_SIZE                   128
 #define STACK_SIZE                   64
 
-static queue<token_t *>             tokenQueue;
+static int getPrescedence(string & token) {
+    if (Utils::isOperator(token[0])) {
+        return Operator::getPrescedence(token);
+    }
+    else if (Utils::isFunction(token)) {
+        return Function::getPrescedence();
+    }
 
-static void queuePut(token_t * t) {
-    tokenQueue.push(t);
-
-    lgLogDebug("queuePut - '%s'", t->getTokenStr().c_str());
+    return 0;
 }
 
-static token_t * queueGet() {
-    token_t * t = tokenQueue.front();
-    tokenQueue.pop();
+static associativity getAssociativity(string & token) {
+    if (Utils::isOperator(token[0])) {
+        return Operator::getAssociativity(token);
+    }
+    else if (Utils::isFunction(token)) {
+        return Function::getAssociativity();
+    }
 
-    lgLogDebug("queueGet - '%s'", t->getTokenStr().c_str());
-
-    return t;
+    return LEFT;
 }
 
-static void stackPush(stack<token_t *> * s, token_t * t) {
-    s->push(t);
+string & toString(mpfr_t value, int outputBase) {
+    char            szOutputString[OUTPUT_MAX_STRING_LENGTH];
+    char            szFormatString[FORMAT_STRING_LENGTH];
+    static string   outputStr;
 
-    lgLogDebug("stackPush - '%s'", t->getTokenStr().c_str());
+    switch (outputBase) {
+        case DECIMAL:
+            snprintf(szFormatString, FORMAT_STRING_LENGTH, "%%.%ldRf", (long)getPrecision());
+            mpfr_snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, szFormatString, value);
+            break;
+
+        case HEXADECIMAL:
+            snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%08lX", mpfr_get_ui(value, MPFR_RNDA));
+            break;
+
+        case OCTAL:
+            snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%lo", mpfr_get_ui(value, MPFR_RNDA));
+            break;
+
+        case BINARY:
+            char * binaryStr = Utils::getBase2String(mpfr_get_ui(value, MPFR_RNDA));
+            snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%s", binaryStr);
+            free(binaryStr);
+            break;
+    }
+
+    lgLogDebug("Output string = '%s', precision = %ld", szOutputString, getPrecision());
+
+    outputStr.assign(szOutputString, OUTPUT_MAX_STRING_LENGTH);
+
+    return outputStr;
 }
 
-static token_t * stackPop(stack<token_t *> * s) {
-    token_t * t = s->top();
-    s->pop();
+string & toFormattedString(mpfr_t value, int outputBase) {
+    const char *    pszIn;
+    char *          pszOut;
+    int             delim_char;
+    int             delim_char_count = 0;
+    int             startIndex = 0;
+    int             tgtIndex = 0;
+    int             srcIndex = 0;
+    int             digitCount = 0;
+    size_t          oldLength;
+    size_t          newLength;
+    bool            hasDelimiters = false;
+    static string   outputStr;
+    static string   formattedString;
 
-    lgLogDebug("stackPop - '%s'", t->getTokenStr().c_str());
+    pszIn = toString(value, outputBase).c_str();
+    oldLength = strlen(pszIn);
+    newLength = oldLength;
 
-    return t;
+    switch (outputBase) {
+        case DECIMAL:
+            delim_char = ',';
+            delim_char_count = 3;
+            startIndex = outputStr.find_first_of('.') - 1;
+            break;
+
+        case BINARY:
+        case HEXADECIMAL:
+        case OCTAL:
+            delim_char = ' ';
+            delim_char_count = 4;
+            startIndex = oldLength - 1;
+            break;
+
+        default:
+            delim_char = ' ';
+            delim_char_count = 4;
+            startIndex = oldLength - 1;
+    }
+
+    if ((startIndex + 1) > delim_char_count) {
+        hasDelimiters = true;
+        newLength += (startIndex + 1) / delim_char_count;
+
+        if ((startIndex + 1) % delim_char_count == 0) {
+            newLength--;
+        }
+    }
+
+    lgLogDebug("toFormattedString(): oldLen:%u, newLen:%u, start:%d", oldLength, newLength, startIndex);
+
+    pszOut = (char *)malloc(newLength + 1);
+
+    /*
+    ** Make sure the string is null terminated...
+    */
+    pszOut[newLength] = 0;
+
+    if (hasDelimiters) {
+        tgtIndex = startIndex + (newLength - oldLength);
+        srcIndex = startIndex;
+
+        strncpy(&pszOut[newLength - oldLength], pszIn, oldLength);
+
+        while (srcIndex >= 0) {
+            lgLogDebug("srcIndex:%d, tgtIndex:%d, digitCount:%d", srcIndex, tgtIndex, digitCount);
+            
+            if (digitCount == delim_char_count) {
+                pszOut[tgtIndex--] = delim_char;
+                digitCount = 0;
+            }
+            
+            pszOut[tgtIndex--] = pszIn[srcIndex--];
+            digitCount++;
+        }
+    }
+    else {
+        strncpy(pszOut, pszIn, oldLength);
+    }
+
+    lgLogDebug("Built formatted string '%s'", pszOut);
+
+    if (lgCheckLogLevel(LOG_LEVEL_DEBUG)) {
+        Utils::hexDump(pszOut, newLength + 1);
+    }
+
+    formattedString.assign(pszOut);
+
+    return formattedString;
 }
 
-static token_t * stackPeek(stack<token_t *> * s) {
-    token_t * t = s->top();
-
-    lgLogDebug("stackPeek - '%s'", t->getTokenStr().c_str());
-
-    return t;
-}
-
-static void _convertToRPN(tokenizer_t * tokenizer) {
-    stack<token_t *> * operatorStack = new stack<token_t *>();
+static void _convertToRPN(tokenizer_t * tokenizer, Queue & tokenQueue) {
+    Stack operatorStack;
 
     while (tzrHasMoreTokens(tokenizer)) {
-        token_t * t = tzrNextToken(tokenizer);
+        string token = tzrNextToken(tokenizer);
         
         /*
         ** If the token is a number, then push it to the output queue.
         */
-        if (t->getType() == token_operand) {
-            queuePut(t);
+        if (Utils::isOperand(token)) {
+            tokenQueue.put(token);
         }
-        else if (t->getType() == token_constant) {
-            queuePut(t);
+        else if (Utils::isConstant(token)) {
+            tokenQueue.put(token);
         }
         /*
         ** If the token is a function token, then push it onto the stack.
         */
-        else if (t->getType() == token_function) {
-            stackPush(operatorStack, t);
+        else if (Utils::isFunction(token)) {
+            operatorStack.push(token);
         }
         /*
         ** If the token is an operator, operand->value, then:
@@ -98,39 +200,36 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
         **	pop o2 off the operator stack, onto the output queue;
         **	at the end of iteration push o1 onto the operator stack.
         */
-        else if (t->getType() == token_operator) {
-            operator_t * o1 = (operator_t *)t;
+        else if (Utils::isOperator(token[0])) {
+            string o1 = token;
 
-            while (!operatorStack->empty()) {
+            while (!operatorStack.isEmpty()) {
+                string topToken = operatorStack.peek();
 
-                token_t * topToken = stackPeek(operatorStack);
-
-                if (topToken->getType() != token_operator && topToken->getType() != token_function) {
+                if (!Utils::isOperator(topToken[0]) && !Utils::isFunction(topToken)) {
                     break;
                 }
 
-                operator_t * o2 = (operator_t *)topToken;
+                string o2 = topToken;
 
-                if ((o1->getAssociativity() == operator_t::left && o1->getPrescedence() <= o2->getPrescedence()) ||
-                    (o1->getAssociativity() == operator_t::right && o1->getPrescedence() < o2->getPrescedence()))
+                if ((getAssociativity(o1) == LEFT && getPrescedence(o1) <= getPrescedence(o2)) ||
+                    (getAssociativity(o1) == RIGHT && getPrescedence(o1) < getPrescedence(o2)))
                 {
-                    queuePut(stackPop(operatorStack));
+                    tokenQueue.put(operatorStack.pop());
                 }
                 else {
                     break;
                 }
             }
 
-            stackPush(operatorStack, t);
+            operatorStack.push(token);
         }
-        else if (t->getType() == token_brace) {
-            brace_t * brace = (brace_t *)t;
-
+        else if (Utils::isBrace(token[0])) {
             /*
             ** If the token is a left parenthesis (i.e. "("), then push it onto the stack.
             */
-            if (brace->isBraceLeft()) {
-                stackPush(operatorStack, t);
+            if (Utils::isLeftBrace(token[0])) {
+                operatorStack.push(token);
             }
             else {
                 /*
@@ -145,19 +244,17 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
                 */
                 bool foundLeftParenthesis = false;
 
-                while (!operatorStack->empty()) {
-                    token_t * stackToken = stackPop(operatorStack);
+                while (!operatorStack.isEmpty()) {
+                    string stackToken = operatorStack.pop();
 
-                    if (stackToken->getType() == token_brace) {
-                        brace_t * b = (brace_t *)stackToken;
-
-                        if (b->isBraceLeft()) {
+                    if (Utils::isBrace(stackToken[0])) {
+                        if (Utils::isLeftBrace(stackToken[0])) {
                             foundLeftParenthesis = true;
                             break;
                         }
                     }
                     else {
-                        queuePut(stackToken);
+                        tokenQueue.put(stackToken);
                     }
                 }
 
@@ -171,7 +268,7 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
         }
     }
 
-    lgLogDebug("Num items in stack %d", (int)operatorStack->size());
+    lgLogDebug("Num items in stack %d", (int)operatorStack.size());
 
     /*
         While there are still operator tokens in the stack:
@@ -179,89 +276,63 @@ static void _convertToRPN(tokenizer_t * tokenizer) {
         then there are mismatched parentheses.
         Pop the operator onto the output queue.
     */
-    while (!operatorStack->empty()) {
-        token_t * stackToken = stackPop(operatorStack);
+    while (!operatorStack.isEmpty()) {
+        string stackToken = operatorStack.pop();
 
-        if (stackToken == NULL) {
-            lgLogError("NULL item on stack");
-            throw stack_error("NULL item on stack", __FILE__, __LINE__);
-        }
-
-        if (stackToken->getType() == token_brace) {
+        if (Utils::isBrace(stackToken[0])) {
             /*
             ** If we've got here, we must have unmatched parenthesis...
             */
             throw unmatched_parenthesis_error("_convertToRPN()", __FILE__, __LINE__);
         }
         else {
-            queuePut(stackToken);
+            tokenQueue.put(stackToken);
         }
     }
-
-    delete operatorStack;
 }
 
-operand_t * evaluate(const char * pszExpression) {
+void evaluate(mpfr_t result, const char * pszExpression, int radix) {
     tokenizer_t             tokenizer;
+    Queue                   tokenQueue;
 
-    system_t & sys = system_t::getInstance();
-
-    tzrInit(&tokenizer, pszExpression, sys.getBase());
+    tzrInit(&tokenizer, pszExpression, radix);
 
     /*
     ** Convert the calculation in infix notation to the postfix notation
     ** (Reverse Polish Notation) using the 'shunting yard algorithm'...
     */
-    _convertToRPN(&tokenizer);
+    _convertToRPN(&tokenizer, tokenQueue);
 
     lgLogDebug("num items in queue = %d", tokenQueue.size());
 
-    stack<token_t *> * stk = new stack<token_t *>();
+    Stack tokenStack;
 
-    while (!tokenQueue.empty()) {
-        token_t * t = queueGet();
+    while (!tokenQueue.isEmpty()) {
+        string t = tokenQueue.get();
 
-        if (t->getType() == token_operand) {
-            lgLogDebug("Got operand: '%s'", t->getTokenStr().c_str());
-            stackPush(stk, t);
+        if (Utils::isOperand(t)) {
+            lgLogDebug("Got operand: '%s'", t.c_str());
+            tokenStack.push(t);
         }
-        else if (t->getType() == token_constant) {
-            lgLogDebug("Got constant: '%s'", t->getTokenStr().c_str());
+        else if (Utils::isConstant(t)) {
+            lgLogDebug("Got constant: '%s'", t.c_str());
 
-            constant_t * c = (constant_t *)t;
-
-            operand_t * result = c->evaluate();
-
-            stackPush(stk, result);
+            tokenStack.push(Constant::evaluate(t));
         }
-        else if (t->getType() == token_function) {
-            operand_t * o1;
+        else if (Utils::isFunction(t)) {
+            lgLogDebug("Got function: '%s'", t.c_str());
 
-            o1 = (operand_t *)stackPop(stk);
+            string o1 = tokenStack.pop();
 
-            function_t * f = (function_t *)t;
-
-            operand_t * result = f->evaluate(o1);
-
-            delete o1;
-
-            stackPush(stk, result);
+            tokenStack.push(Function::evaluate(t, radix, o1));
         }
-        else if (t->getType() == token_operator) {
-            operand_t * o1;
-            operand_t * o2;
+        else if (Utils::isOperator(t[0])) {
+            lgLogDebug("Got operator: '%s'", t.c_str());
 
-            o2 = (operand_t *)stackPop(stk);
-            o1 = (operand_t *)stackPop(stk);
+            string o2 = tokenStack.pop();
+            string o1 = tokenStack.pop();
 
-            operator_t * op = (operator_t *)t;
-
-            operand_t * result = op->evaluate(o1, o2);
-
-            delete o1;
-            delete o2;
-
-            stackPush(stk, result);
+            tokenStack.push(Operator::evaluate(t, radix, o1, o2));
         }
     }
 
@@ -270,16 +341,19 @@ operand_t * evaluate(const char * pszExpression) {
     ** it is the result of the calculation. Otherwise, we
     ** have too many tokens and therefore an error...
     */
-    if (stk->size() == 1) {
-        operand_t * result = (operand_t *)stackPop(stk);
-        return result;
+    if (tokenStack.size() == 1) {
+        string answer = tokenStack.pop();
+
+        lgLogDebug("Answer = %s", answer.c_str());
+
+        mpfr_set_str(result, answer.c_str(), radix, MPFR_RNDA);
     }
     else {
         lgLogError("evaluate(): Got invalid items on stack!");
 
-        while (!stk->empty()) {
-            token_t * tok = stackPop(stk);
-            lgLogError("Invalid item on stack '%s'\n", tok->getTokenStr().c_str());
+        while (!tokenStack.isEmpty()) {
+            string tok = tokenStack.pop();
+            lgLogError("Invalid item on stack '%s'\n", tok.c_str());
         }
 
         tzrFinish(&tokenizer);
@@ -287,5 +361,4 @@ operand_t * evaluate(const char * pszExpression) {
     }
 
     tzrFinish(&tokenizer);
-    delete stk;
 }

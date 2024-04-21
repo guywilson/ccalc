@@ -7,8 +7,8 @@
 
 #include "tokenizer.h"
 #include "logger.h"
-#include "system.h"
-#include "factory.h"
+
+using namespace std;
 
 static bool isdelim(char ch) {
     int                     i;
@@ -152,11 +152,12 @@ bool tzrHasMoreTokens(tokenizer_t * t) {
     return false;
 }
 
-token_t * tzrNextToken(tokenizer_t * t) {
+string & tzrNextToken(tokenizer_t * t) {
     int                 tokenLength;
     int                 i;
     int                 j = 0;
     char *              pszToken;
+    static string       token;
 
     tokenLength = (t->endIndex - t->startIndex);
 
@@ -168,13 +169,11 @@ token_t * tzrNextToken(tokenizer_t * t) {
     
     pszToken[j] = 0;
 
+    token.assign(pszToken);
+    
     t->startIndex = t->endIndex;
 
     lgLogDebug("Got token '%s'", pszToken);
-
-    token_t * token = token_factory::createToken(pszToken);
-
-    token->setBase(t->base);
 
     free(pszToken);
 

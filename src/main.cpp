@@ -27,20 +27,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <readline/history.h>
 
 #include "logger.h"
-#include "operand.h"
 #include "calc_error.h"
 #include "tokenizer.h"
 #include "calculator.h"
 #include "timeutils.h"
+#include "utils.h"
 #include "system.h"
-#include "memory.h"
 #include "test.h"
 #include "version.h"
 
 #define DEFAULT_LOG_LEVEL                       (LOG_LEVEL_FATAL | LOG_LEVEL_ERROR)
-
-#define DEFAULT_PRECISION                        2
-#define MAX_PRECISION                           80
 
 const char * pszWarranty = 
     "This program comes with ABSOLUTELY NO WARRANTY.\n" \
@@ -113,10 +109,8 @@ static void printUsage(void) {
     printf("\texit\tExit the calculator\n\n");
 }
 
-static const char * getBaseString(void) {
-    system_t & sys = system_t::getInstance();
-
-    switch (sys.getBase()) {
+static const char * getBaseString(int base) {
+    switch (base) {
         case DECIMAL:
             return "DEC";
 
@@ -134,43 +128,24 @@ static const char * getBaseString(void) {
     }
 }
 
-static const char * getTrigModeString(void) {
-    system_t & sys = system_t::getInstance();
-
-    if (sys.getBase() == DECIMAL) {
-        switch (sys.getTrigMode()) {
-            case radians:
-                return "RN";
-
-            case degrees:
-                return "DG";
-        }
-    }
-    else {
-        return "";
-    }
-
-    return "";
-}
-
 int main(int argc, char ** argv) {
     char *              pszCalculation;
     char                szPrompt[32];
     bool                loop = true;
     bool                doFormat = true;
-    long                precision = 2L;
-    operand_t *         result = NULL;
+    int                 base = DECIMAL;
+    long                precision;
+    mpfr_t              result;
+    string              answer;
 
     rl_bind_key('\t', rl_complete);
 
     using_history();
 
-    system_t & sys = system_t::getInstance();
-    memory_t & mem = memory_t::getInstance();
+    mpfr_init2(result, getBasePrecision());
 
-    sys.setPrecision(DEFAULT_PRECISION);
-    sys.setBase(DECIMAL);
-    sys.setTrigMode(degrees);
+    memInit();
+    setPrecision(DEFAULT_PRECISION);
 
     lgOpenStdout("LOG_LEVEL_ALL");
     lgSetLogLevel(DEFAULT_LOG_LEVEL);
@@ -178,7 +153,7 @@ int main(int argc, char ** argv) {
     printBanner();
 
     while (loop) {
-        snprintf(szPrompt, 32, "calc [%s][%s]> ", getBaseString(), getTrigModeString());
+        snprintf(szPrompt, 32, "calc [%s]> ", getBaseString(base));
 
         pszCalculation = readline(szPrompt);
 
@@ -208,7 +183,7 @@ int main(int argc, char ** argv) {
                     fprintf(stderr, "Precision must be between 0 and %d\n", MAX_PRECISION);
                 }
                 else {
-                    sys.setPrecision(precision);
+                    setPrecision(precision);
                 }
             }
             else if (strncmp(pszCalculation, "dbgon", 5) == 0) {
@@ -232,88 +207,68 @@ int main(int argc, char ** argv) {
             else if (strncmp(pszCalculation, "memst", 5) == 0) {
                 int m = atoi(&pszCalculation[5]);
 
-                try {
-                    mem.store(m, result);
-                }
-                catch (calc_error & e) {
-                    fprintf(stderr, "Failed to store result in memory %d: %s\n", m, e.what());
-                }
+                memStore(result, m);
             }
             else if (strncmp(pszCalculation, "dec", 3) == 0) {
-                sys.setBase(DECIMAL);
+                base = DECIMAL;
                 
-                if (result != NULL) {
-                    if (doFormat) {
-                        printf("= %s\n", result->toFormattedString(sys.getBase()).c_str());
-                    }
-                    else {
-                        printf("= %s\n", result->toString(sys.getBase()).c_str());
-                    }
+                if (doFormat) {
+                    answer.assign(toFormattedString(result, base));
                 }
+                else {
+                    answer.assign(toString(result, base));
+                }
+
+                printf("= %s\n", answer.c_str());
             }
             else if (strncmp(pszCalculation, "hex", 3) == 0) {
-                sys.setBase(HEXADECIMAL);
-                sys.setTrigMode(degrees);
+                base = HEXADECIMAL;
 
-                if (result != NULL) {
-                    if (doFormat) {
-                        printf("= %s\n", result->toFormattedString(sys.getBase()).c_str());
-                    }
-                    else {
-                        printf("= %s\n", result->toString(sys.getBase()).c_str());
-                    }
+                if (doFormat) {
+                    answer.assign(toFormattedString(result, base));
                 }
+                else {
+                    answer.assign(toString(result, base));
+                }
+
+                printf("= %s\n", answer.c_str());
             }
             else if (strncmp(pszCalculation, "bin", 3) == 0) {
-                sys.setBase(BINARY);
-                sys.setTrigMode(degrees);
+                base = BINARY;
 
-                if (result != NULL) {
-                    if (doFormat) {
-                        printf("= %s\n", result->toFormattedString(sys.getBase()).c_str());
-                    }
-                    else {
-                        printf("= %s\n", result->toString(sys.getBase()).c_str());
-                    }
+                if (doFormat) {
+                    answer.assign(toFormattedString(result, base));
                 }
+                else {
+                    answer.assign(toString(result, base));
+                }
+
+                printf("= %s\n", answer.c_str());
             }
             else if (strncmp(pszCalculation, "oct", 3) == 0) {
-                sys.setBase(OCTAL);
-                sys.setTrigMode(degrees);
+                base = OCTAL;
 
-                if (result != NULL) {
-                    if (doFormat) {
-                        printf("= %s\n", result->toFormattedString(sys.getBase()).c_str());
-                    }
-                    else {
-                        printf("= %s\n", result->toString(sys.getBase()).c_str());
-                    }
+                if (doFormat) {
+                    answer.assign(toFormattedString(result, base));
                 }
-            }
-            else if (strncmp(pszCalculation, "deg", 3) == 0) {
-                sys.setTrigMode(degrees);
-            }
-            else if (strncmp(pszCalculation, "rad", 3) == 0) {
-                sys.setTrigMode(radians);
+                else {
+                    answer.assign(toString(result, base));
+                }
+
+                printf("= %s\n", answer.c_str());
             }
             else {
                 try {
-                    if (result != NULL) {
-                        delete result;
-                    }
-
-                    result = evaluate(pszCalculation);
+                    evaluate(result, pszCalculation, base);
 
                     if (doFormat) {
-                        printf("%s = %s\n", 
-                                    pszCalculation, 
-                                    result->toFormattedString(sys.getBase()).c_str());
+                        answer.assign(toFormattedString(result, base));
                     }
                     else {
-                        printf("%s = %s\n", 
-                                    pszCalculation, 
-                                    result->toString(sys.getBase()).c_str());
+                        answer.assign(toString(result, base));
                     }
+
+                    printf("%s = %s\n", pszCalculation, answer.c_str());
                 }
                 catch (calc_error & e) {
                     printf("Calculation failed for %s: %s\n", pszCalculation, e.what());
@@ -324,9 +279,7 @@ int main(int argc, char ** argv) {
         free(pszCalculation);
     }
 
-    if (result != NULL) {
-        delete result;
-    }
+    mpfr_clear(result);
 
     return 0;
 }

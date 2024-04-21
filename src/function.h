@@ -3,403 +3,138 @@
 #include <gmp.h>
 #include <mpfr.h>
 
-#include "system.h"
 #include "memory.h"
-#include "token.h"
 #include "operator.h"
-#include "operand.h"
 #include "logger.h"
+#include "system.h"
 
 using namespace std;
 
 #ifndef __INCL_FUNCTION
 #define __INCL_FUNCTION
 
-class function_t : public operator_t {
-    public:
-        function_t(string & s) : operator_t(s) {
-            setType(token_function);
-        }
-        function_t(const char * s) : operator_t(s) {
-            setType(token_function);
+class Function {
+    private:
+        static void _radians(mpfr_t radians, mpfr_t degrees) {
+            mpfr_t  pi;
+            mpfr_t  one_eighty;
+
+            mpfr_init2(pi, getBasePrecision());
+            mpfr_init2(one_eighty, getBasePrecision());
+
+            mpfr_const_pi(pi, MPFR_RNDA);
+            mpfr_set_ui(one_eighty, 180U, MPFR_RNDA);
+
+            mpfr_div(radians, pi, one_eighty, MPFR_RNDA);
+
+            mpfr_mul(radians, radians, degrees, MPFR_RNDA);
         }
 
-        int getPrescedence() {
+        static void _degrees(mpfr_t degrees, mpfr_t radians) {
+            mpfr_t  pi;
+            mpfr_t  one_eighty;
+
+            mpfr_init2(pi, getBasePrecision());
+            mpfr_init2(one_eighty, getBasePrecision());
+
+            mpfr_const_pi(pi, MPFR_RNDA);
+            mpfr_set_ui(one_eighty, 180U, MPFR_RNDA);
+            
+            mpfr_div(degrees, one_eighty, pi, MPFR_RNDA);
+
+            mpfr_mul(degrees, degrees, radians, MPFR_RNDA);
+        }
+
+    public:
+        static string & evaluate(string & f, int radix, string & operand1) {
+            mpfr_t          r;
+            mpfr_t          o1;
+            char            szOutputString[OUTPUT_MAX_STRING_LENGTH];
+            char            szFormatString[FORMAT_STRING_LENGTH];
+            static string   result;
+
+            lgLogDebug("Evaluating: %s(%s)", f.c_str(), operand1.c_str());
+            
+            mpfr_init2(o1, getBasePrecision());
+            mpfr_strtofr(o1, operand1.c_str(), NULL, radix, MPFR_RNDA);
+
+            mpfr_init2(r, getBasePrecision());
+
+            if (f.compare("sin") == 0) {
+                mpfr_sinu(r, o1, 360U, MPFR_RNDA);
+            }
+            else if (f.compare("cos") == 0) {
+                mpfr_cosu(r, o1, 360U, MPFR_RNDA);
+            }
+            else if (f.compare("tan") == 0) {
+                mpfr_tanu(r, o1, 360U, MPFR_RNDA);
+            }
+            else if (f.compare("asin") == 0) {
+                mpfr_asinu(r, o1, 360U, MPFR_RNDA);
+            }
+            else if (f.compare("acos") == 0) {
+                mpfr_acosu(r, o1, 360U, MPFR_RNDA);
+            }
+            else if (f.compare("atan") == 0) {
+                mpfr_atanu(r, o1, 360U, MPFR_RNDA);
+            }
+            else if (f.compare("sinh") == 0) {
+                mpfr_sinh(r, o1, MPFR_RNDA);
+            }
+            else if (f.compare("cosh") == 0) {
+                mpfr_cosh(r, o1, MPFR_RNDA);
+            }
+            else if (f.compare("tanh") == 0) {
+                mpfr_tanh(r, o1, MPFR_RNDA);
+            }
+            else if (f.compare("asinh") == 0) {
+                mpfr_asinh(r, o1, MPFR_RNDA);
+            }
+            else if (f.compare("acosh") == 0) {
+                mpfr_acosh(r, o1, MPFR_RNDA);
+            }
+            else if (f.compare("atanh") == 0) {
+                mpfr_atanh(r, o1, MPFR_RNDA);
+            }
+            else if (f.compare("sqrt") == 0) {
+                mpfr_sqrt(r, o1, MPFR_RNDA);
+            }
+            else if (f.compare("log") == 0) {
+                mpfr_log10(r, o1, MPFR_RNDA);
+            }
+            else if (f.compare("ln") == 0) {
+                mpfr_log(r, o1, MPFR_RNDA);
+            }
+            else if (f.compare("fac") == 0) {
+                mpfr_fac_ui(r, mpfr_get_ui(o1, MPFR_RNDA), MPFR_RNDA);
+            }
+            else if (f.compare("rad") == 0) {
+                _radians(r, o1);
+            }
+            else if (f.compare("deg") == 0) {
+                _degrees(r, o1);
+            }
+            else if (f.compare("mem") == 0) {
+                mpfr_cosu(r, o1, 360U, MPFR_RNDA);
+            }
+
+            snprintf(szFormatString, FORMAT_STRING_LENGTH, "%%.%ldRf", (long)getPrecision());
+            mpfr_snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, szFormatString, r);
+
+            mpfr_clear(r);
+            mpfr_clear(o1);
+
+            result.assign(szOutputString);
+
+            return result;
+        }
+
+        static int getPrescedence() {
             return 5;
         }
 
-        virtual operand_t * evaluate(operand_t * o1) {
-            return NULL;
-        }
-
-        virtual operand_t * evaluate(operand_t * o1, operand_t * o2) {
-            return NULL;
-        }
-};
-
-class function_sin_t : public function_t {
-    public:
-        function_sin_t(string & s) : function_t(s) {}
-        function_sin_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-
-            system_t & sys = system_t::getInstance();
-
-            if (sys.getTrigMode() == degrees) {
-                mpfr_sinu(r, o1->getValue(), 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_sin(r, o1->getValue(), MPFR_RNDA);
-            }
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_cos_t : public function_t {
-    public:
-        function_cos_t(string & s) : function_t(s) {}
-        function_cos_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-
-            system_t & sys = system_t::getInstance();
-
-            if (sys.getTrigMode() == degrees) {
-                mpfr_cosu(r, o1->getValue(), 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_cos(r, o1->getValue(), MPFR_RNDA);
-            }
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_tan_t : public function_t {
-    public:
-        function_tan_t(string & s) : function_t(s) {}
-        function_tan_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-
-            system_t & sys = system_t::getInstance();
-
-            if (sys.getTrigMode() == degrees) {
-                mpfr_tanu(r, o1->getValue(), 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_tan(r, o1->getValue(), MPFR_RNDA);
-            }
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_asin_t : public function_t {
-    public:
-        function_asin_t(string & s) : function_t(s) {}
-        function_asin_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-
-            system_t & sys = system_t::getInstance();
-
-            if (sys.getTrigMode() == degrees) {
-                mpfr_asinu(r, o1->getValue(), 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_asin(r, o1->getValue(), MPFR_RNDA);
-            }
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_acos_t : public function_t {
-    public:
-        function_acos_t(string & s) : function_t(s) {}
-        function_acos_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-
-            system_t & sys = system_t::getInstance();
-
-            if (sys.getTrigMode() == degrees) {
-                mpfr_acosu(r, o1->getValue(), 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_acos(r, o1->getValue(), MPFR_RNDA);
-            }
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_atan_t : public function_t {
-    public:
-        function_atan_t(string & s) : function_t(s) {}
-        function_atan_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-
-            system_t & sys = system_t::getInstance();
-
-            if (sys.getTrigMode() == degrees) {
-                mpfr_atanu(r, o1->getValue(), 360U, MPFR_RNDA);
-            }
-            else {
-                mpfr_atan(r, o1->getValue(), MPFR_RNDA);
-            }
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_sinh_t : public function_t {
-    public:
-        function_sinh_t(string & s) : function_t(s) {}
-        function_sinh_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_sinh(r, o1->getValue(), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_cosh_t : public function_t {
-    public:
-        function_cosh_t(string & s) : function_t(s) {}
-        function_cosh_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_cosh(r, o1->getValue(), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_tanh_t : public function_t {
-    public:
-        function_tanh_t(string & s) : function_t(s) {}
-        function_tanh_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_tanh(r, o1->getValue(), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_asinh_t : public function_t {
-    public:
-        function_asinh_t(string & s) : function_t(s) {}
-        function_asinh_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_asinh(r, o1->getValue(), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_acosh_t : public function_t {
-    public:
-        function_acosh_t(string & s) : function_t(s) {}
-        function_acosh_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_cos(r, o1->getValue(), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_atanh_t : public function_t {
-    public:
-        function_atanh_t(string & s) : function_t(s) {}
-        function_atanh_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_tan(r, o1->getValue(), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_sqrt_t : public function_t {
-    public:
-        function_sqrt_t(string & s) : function_t(s) {}
-        function_sqrt_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_sqrt(r, o1->getValue(), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_factorial_t : public function_t {
-    public:
-        function_factorial_t(string & s) : function_t(s) {}
-        function_factorial_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_fac_ui(r, mpfr_get_ui(o1->getValue(), MPFR_RNDA), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_logarithm_t : public function_t {
-    public:
-        function_logarithm_t(string & s) : function_t(s) {}
-        function_logarithm_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_log10(r, o1->getValue(), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_natural_log_t : public function_t {
-    public:
-        function_natural_log_t(string & s) : function_t(s) {}
-        function_natural_log_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            mpfr_t r;
-
-            mpfr_init2(r, getBasePrecision());
-            mpfr_log(r, o1->getValue(), MPFR_RNDA);
-
-            operand_t * result = new operand_t(r);
-
-            mpfr_clear(r);
-            
-            return result;
-        }
-};
-
-class function_memory_t : public function_t {
-    public:
-        function_memory_t(string & s) : function_t(s) {}
-        function_memory_t(const char * s) : function_t(s) {}
-
-        operand_t * evaluate(operand_t * o1) {
-            memory_t & mem = memory_t::getInstance();
-
-            operand_t * result = mem.retrieve((int)mpfr_get_si(o1->getValue(), MPFR_RNDA));
-
-            return result;
+        static associativity getAssociativity() {
+            return LEFT;
         }
 };
 
