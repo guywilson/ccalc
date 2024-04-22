@@ -30,7 +30,7 @@ mpfr_prec_t getPrecision(void);
 void        memInit(void);
 void        memRetrieve(mpfr_t m, int location);
 void        memStore(mpfr_t m, int location);
-string      toString(mpfr_t value, int outputBase);
-string      toFormattedString(mpfr_t value, int outputBase);
+string      toString(mpfr_t value, int radix);
+string      toFormattedString(mpfr_t value, int radix);
 
 #endif

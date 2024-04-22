@@ -1,4 +1,7 @@
 #include <string>
+#include <sstream>
+#include <iomanip>
+#include <locale>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -41,12 +44,12 @@ void memStore(mpfr_t m, int location) {
     mpfr_set(memory[location], m, MPFR_RNDA);
 }
 
-string toString(mpfr_t value, int outputBase) {
+string toString(mpfr_t value, int radix) {
     char            szOutputString[OUTPUT_MAX_STRING_LENGTH];
     char            szFormatString[FORMAT_STRING_LENGTH];
     string          outputStr;
 
-    switch (outputBase) {
+    switch (radix) {
         case DECIMAL:
             snprintf(szFormatString, FORMAT_STRING_LENGTH, "%%.%ldRf", (long)getPrecision());
             mpfr_snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, szFormatString, value);
@@ -72,99 +75,29 @@ string toString(mpfr_t value, int outputBase) {
     lgLogDebug(
         "Output string = '%s', radix = %d, precision = %ld", 
         outputStr.c_str(), 
-        outputBase, 
+        radix, 
         getPrecision());
 
     return outputStr;
 }
 
-string toFormattedString(mpfr_t value, int outputBase) {
-    const char *    pszIn;
-    char *          pszOut;
-    int             delim_char;
-    int             delim_char_count = 0;
-    int             startIndex = 0;
-    int             tgtIndex = 0;
-    int             srcIndex = 0;
-    int             digitCount = 0;
-    size_t          oldLength;
-    size_t          newLength;
-    bool            hasDelimiters = false;
-    static string   outputStr;
-    string          formattedString;
+string toFormattedString(mpfr_t value, int radix) {
+    string formatted;
+    // string unformatted = toString(value, radix);
 
-    pszIn = toString(value, outputBase).c_str();
-    oldLength = strlen(pszIn);
-    newLength = oldLength;
+    // string integerPart = unformatted.substr(0, unformatted.find_last_of("."));
+    // string mantissa = unformatted.substr(unformatted.find_last_of("."));
 
-    switch (outputBase) {
-        case DECIMAL:
-            delim_char = ',';
-            delim_char_count = 3;
-            startIndex = outputStr.find_first_of('.') - 1;
-            break;
+    // switch (radix) {
+    //     case DECIMAL:
+    //         if (integerPart.length() > 3) {
+    //             for (int i = integerPart.length() - 1;i >= 0;i -= 3) {
+    //                 integerPart.insert(integerPart.crend(), ',');
+    //             }
+    //         }
+    //         break;
+    // }
+    // unformatted.
 
-        case BINARY:
-        case HEXADECIMAL:
-        case OCTAL:
-            delim_char = ' ';
-            delim_char_count = 4;
-            startIndex = oldLength - 1;
-            break;
-
-        default:
-            delim_char = ' ';
-            delim_char_count = 4;
-            startIndex = oldLength - 1;
-    }
-
-    if ((startIndex + 1) > delim_char_count) {
-        hasDelimiters = true;
-        newLength += (startIndex + 1) / delim_char_count;
-
-        if ((startIndex + 1) % delim_char_count == 0) {
-            newLength--;
-        }
-    }
-
-    lgLogDebug("toFormattedString(): oldLen:%u, newLen:%u, start:%d", oldLength, newLength, startIndex);
-
-    pszOut = (char *)malloc(newLength + 1);
-
-    /*
-    ** Make sure the string is null terminated...
-    */
-    pszOut[newLength] = 0;
-
-    if (hasDelimiters) {
-        tgtIndex = startIndex + (newLength - oldLength);
-        srcIndex = startIndex;
-
-        strncpy(&pszOut[newLength - oldLength], pszIn, oldLength);
-
-        while (srcIndex >= 0) {
-            lgLogDebug("srcIndex:%d, tgtIndex:%d, digitCount:%d", srcIndex, tgtIndex, digitCount);
-            
-            if (digitCount == delim_char_count) {
-                pszOut[tgtIndex--] = delim_char;
-                digitCount = 0;
-            }
-            
-            pszOut[tgtIndex--] = pszIn[srcIndex--];
-            digitCount++;
-        }
-    }
-    else {
-        strncpy(pszOut, pszIn, oldLength);
-    }
-
-    lgLogDebug("Built formatted string '%s'", pszOut);
-
-    if (lgCheckLogLevel(LOG_LEVEL_DEBUG)) {
-        Utils::hexDump(pszOut, newLength + 1);
-    }
-
-    formattedString.assign(pszOut);
-
-    return formattedString;
+    return formatted;
 }

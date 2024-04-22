@@ -201,7 +201,8 @@ int main(int argc, char ** argv) {
                 lgSetLogLevel(DEFAULT_LOG_LEVEL);
             }
             else if (strncmp(pszCalculation, "fmton", 5) == 0) {
-                doFormat = true;
+                fprintf(stderr, "Formatted output is not currently implemented, sorry.\n");
+                // doFormat = true;
             }
             else if (strncmp(pszCalculation, "fmtoff", 6) == 0) {
                 doFormat = false;
