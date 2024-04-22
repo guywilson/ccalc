@@ -86,6 +86,8 @@ static void printUsage(void) {
     printf("\tlog(x)\treturn the log of x\n");
     printf("\tln(x)\treturn the natural log of x\n");
     printf("\tfact(x)\treturn the factorial of x\n");
+    printf("\trad(x)\tthe value in radians of x degrees\n");
+    printf("\tdeg(x)\tthe value in degrees of x radians\n");
     printf("\tmem(n)\tthe value in memory location n, where n is 0 - 9\n\n");
     printf("Constants supported:\n");
     printf("\tpi\tthe ratio pi\n");
@@ -132,7 +134,7 @@ int main(int argc, char ** argv) {
     char *              pszCalculation;
     char                szPrompt[32];
     bool                loop = true;
-    bool                doFormat = true;
+    bool                doFormat = false;
     int                 base = DECIMAL;
     long                precision;
     mpfr_t              result;
