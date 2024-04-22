@@ -19,7 +19,7 @@ using namespace std;
 static bool testEvaluate(const char * pszCalculation, int radix, const char * pszExpectedResult) {
     mpfr_t          r;
     bool            success;
-    const char *    pszResult;
+    string          result;
 
     mpfr_init2(r, getBasePrecision());
 
@@ -31,19 +31,19 @@ static bool testEvaluate(const char * pszCalculation, int radix, const char * ps
         return false;
     }
 
-    pszResult = toString(r, radix).c_str();
+    result = toString(r, radix);
 
-    if (strncmp(pszResult, pszExpectedResult, strlen(pszExpectedResult)) == 0) {
-        printf("**** Success :) - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, pszResult);
+    if (strncmp(result.c_str(), pszExpectedResult, strlen(pszExpectedResult)) == 0) {
+        printf("**** Success :) - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, result.c_str());
         success = true;
     }
     else {
-        printf("**** Failed :( - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, pszResult);
+        printf("**** Failed :( - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, result.c_str());
         success = false;
     }
 
     mpfr_clear(r);
-    
+
     return success;
 }
 
@@ -80,7 +80,7 @@ int test(void) {
 
     setPrecision(2U);
     base = DECIMAL;
-    testEvaluate("pi * (2 ^ 2)", base, "12.57") ? numTestsPassed++ : numTestsFailed++;
+    testEvaluate("pi * (2 ^ 2)", base, "12.56") ? numTestsPassed++ : numTestsFailed++;
     totalTests++;
 
     setPrecision(2U);

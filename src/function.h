@@ -46,12 +46,10 @@ class Function {
         }
 
     public:
-        static string & evaluate(string & f, int radix, string & operand1) {
+        static string evaluate(string & f, int radix, string & operand1) {
             mpfr_t          r;
             mpfr_t          o1;
-            char            szOutputString[OUTPUT_MAX_STRING_LENGTH];
-            char            szFormatString[FORMAT_STRING_LENGTH];
-            static string   result;
+            string          result;
 
             lgLogDebug("Evaluating: %s(%s)", f.c_str(), operand1.c_str());
             
@@ -105,7 +103,7 @@ class Function {
             else if (f.compare("ln") == 0) {
                 mpfr_log(r, o1, MPFR_RNDA);
             }
-            else if (f.compare("fac") == 0) {
+            else if (f.compare("fact") == 0) {
                 mpfr_fac_ui(r, mpfr_get_ui(o1, MPFR_RNDA), MPFR_RNDA);
             }
             else if (f.compare("rad") == 0) {
@@ -118,13 +116,10 @@ class Function {
                 mpfr_cosu(r, o1, 360U, MPFR_RNDA);
             }
 
-            snprintf(szFormatString, FORMAT_STRING_LENGTH, "%%.%ldRf", (long)getPrecision());
-            mpfr_snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, szFormatString, r);
+            result.assign(toString(r, radix));
 
             mpfr_clear(r);
             mpfr_clear(o1);
-
-            result.assign(szOutputString);
 
             return result;
         }

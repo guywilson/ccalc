@@ -1,3 +1,4 @@
+#include <string>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -6,20 +7,12 @@
 #include <gmp.h>
 #include <mpfr.h>
 
+using namespace std;
+
 #ifndef __INCL_UTILS
 #define __INCL_UTILS
 
 #define BASE2_OUTPUT_LEN                        (sizeof(uint32_t) * 8)
-
-#define BASE_10                          10
-#define BASE_16                          16
-#define BASE_8                            8
-#define BASE_2                            2
-
-#define DECIMAL                         BASE_10
-#define HEXADECIMAL                     BASE_16
-#define OCTAL                           BASE_8
-#define BINARY                          BASE_2
 
 static const char * pszDigits = ".-0123456789abcdefABCDEF";
 static const char * pszWhitespace = " /n/r/t";
@@ -161,7 +154,7 @@ class Utils {
             else if (token.compare("ln") == 0) {
                 return true;
             }
-            else if (token.compare("fac") == 0) {
+            else if (token.compare("fact") == 0) {
                 return true;
             }
             else if (token.compare("rad") == 0) {

@@ -1,5 +1,8 @@
+#include <string>
 #include <gmp.h>
 #include <mpfr.h>
+
+using namespace std;
 
 #ifndef __INCL_SYSTEM
 #define __INCL_SYSTEM
@@ -9,18 +12,25 @@
 #define DEFAULT_PRECISION                        2
 #define MAX_PRECISION                           80
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define FORMAT_STRING_LENGTH             32
+#define OUTPUT_MAX_STRING_LENGTH        256
+
+#define BASE_10                          10
+#define BASE_16                          16
+#define BASE_8                            8
+#define BASE_2                            2
+
+#define DECIMAL                         BASE_10
+#define HEXADECIMAL                     BASE_16
+#define OCTAL                           BASE_8
+#define BINARY                          BASE_2
 
 void        setPrecision(mpfr_prec_t p);
 mpfr_prec_t getPrecision(void);
 void        memInit(void);
 void        memRetrieve(mpfr_t m, int location);
 void        memStore(mpfr_t m, int location);
-
-#ifdef __cplusplus
-}
-#endif
+string      toString(mpfr_t value, int outputBase);
+string      toFormattedString(mpfr_t value, int outputBase);
 
 #endif

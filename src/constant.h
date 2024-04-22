@@ -16,11 +16,11 @@ using namespace std;
 
 class Constant {
     public:
-        static string & evaluate(string & token) {
+        static string evaluate(string & token) {
             mpfr_t          r;
             char            szOutputString[OUTPUT_MAX_STRING_LENGTH];
             char            szFormatString[FORMAT_STRING_LENGTH];
-            static string   result;
+            string          result;
 
             mpfr_init2(r, getBasePrecision());
 

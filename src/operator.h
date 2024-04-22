@@ -12,9 +12,6 @@ using namespace std;
 #ifndef __INCL_OPERATOR
 #define __INCL_OPERATOR
 
-#define FORMAT_STRING_LENGTH             32
-#define OUTPUT_MAX_STRING_LENGTH        256
-
 typedef enum {
     LEFT,
     RIGHT
@@ -23,13 +20,11 @@ associativity;
 
 class Operator {
     public:
-        static string & evaluate(string & op, int radix, string & operand1, string & operand2) {
+        static string evaluate(string & op, int radix, string & operand1, string & operand2) {
             mpfr_t          r;
             mpfr_t          o1;
             mpfr_t          o2;
-            char            szOutputString[OUTPUT_MAX_STRING_LENGTH];
-            char            szFormatString[FORMAT_STRING_LENGTH];
-            static string   result;
+            string          result;
 
             lgLogDebug("Evaluating: %s %s %s", operand1.c_str(), op.c_str(), operand2.c_str());
 
@@ -111,16 +106,13 @@ class Operator {
                     break;
             }
 
-            snprintf(szFormatString, FORMAT_STRING_LENGTH, "%%.%ldRf", (long)getPrecision());
-            mpfr_snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, szFormatString, r);
+            result.assign(toString(r, radix));
 
-            lgLogDebug("Result = %s", szOutputString);
+            lgLogDebug("Result = %s", result.c_str());
 
             mpfr_clear(r);
             mpfr_clear(o2);
             mpfr_clear(o1);
-
-            result.assign(szOutputString);
 
             return result;
         }

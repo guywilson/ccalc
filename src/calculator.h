@@ -18,8 +18,6 @@
 #define ERROR_EVALUATE_UNEXPECTED_TOKENS                -7
 #define ERROR_EVALUATE_NULL_STACK_POP                   -8
 
-string &    toString(mpfr_t value, int outputBase);
-string &    toFormattedString(mpfr_t value, int outputBase);
 void        evaluate(mpfr_t result, const char * pszExpression, int radix);
 
 #endif

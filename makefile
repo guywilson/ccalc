@@ -7,7 +7,7 @@
 ###############################################################################
 
 # Version number for CCALC
-MAJOR_VERSION = 1
+MAJOR_VERSION = 2
 MINOR_VERSION = 0
 
 # Directories

@@ -3,6 +3,8 @@
 #include <queue>
 #include <stack>
 
+#include "logger.h"
+
 using namespace std;
 
 #ifndef __INCL_QSTACK
@@ -13,19 +15,22 @@ class Stack {
         stack<std::string>      _stack;
 
     public:
-        void push(string & s) {
+        void push(string s) {
+            lgLogDebug("Pushing '%s'", s.c_str());
             _stack.push(s);
         }
 
-        string & pop() {
-            string & s = _stack.top();
+        string pop() {
+            string s = _stack.top();
             _stack.pop();
+
+            lgLogDebug("Popped '%s'", s.c_str());
 
             return s;
         }
 
-        string & peek() {
-            string & s = _stack.top();
+        string peek() {
+            string s = _stack.top();
 
             return s;
         }
@@ -44,12 +49,12 @@ class Queue {
         queue<std::string>      _queue;
 
     public:
-        void put(string & s) {
+        void put(string s) {
             _queue.push(s);
         }
 
-        string & get() {
-            string & s = _queue.front();
+        string get() {
+            string s = _queue.front();
             _queue.pop();
 
             return s;
