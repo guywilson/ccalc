@@ -71,7 +71,7 @@ string toString(mpfr_t value, int radix) {
             break;
 
         case HEXADECIMAL:
-            snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%08lX", mpfr_get_ui(value, MPFR_RNDA));
+            snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%016lX", mpfr_get_ui(value, MPFR_RNDA));
             break;
 
         case OCTAL:
@@ -80,12 +80,12 @@ string toString(mpfr_t value, int radix) {
 
         case BINARY:
             char * binaryStr = Utils::getBase2String(mpfr_get_ui(value, MPFR_RNDA));
-            snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%s", binaryStr);
+            snprintf(szOutputString, strlen(binaryStr), "%s", binaryStr);
             free(binaryStr);
             break;
     }
 
-    outputStr.assign(szOutputString, OUTPUT_MAX_STRING_LENGTH);
+    outputStr.assign(szOutputString);
 
     lgLogDebug(
         "Output string = '%s', radix = %d, precision = %ld", 
@@ -107,6 +107,8 @@ string toFormattedString(mpfr_t value, int radix) {
 
     i = s.length() - 1;
     j = out.length() - 1;
+
+    lgLogDebug("toFormattedString: inputLen: %d, outputLength: %d", i, j);
 
     switch (radix) {
         case DECIMAL:
