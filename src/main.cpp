@@ -134,7 +134,7 @@ int main(int argc, char ** argv) {
     char *              pszCalculation;
     char                szPrompt[32];
     bool                loop = true;
-    bool                doFormat = false;
+    bool                doFormat = true;
     int                 base = DECIMAL;
     long                precision;
     mpfr_t              result;
@@ -201,8 +201,8 @@ int main(int argc, char ** argv) {
                 lgSetLogLevel(DEFAULT_LOG_LEVEL);
             }
             else if (strncmp(pszCalculation, "fmton", 5) == 0) {
-                fprintf(stderr, "Formatted output is not currently implemented, sorry.\n");
-                // doFormat = true;
+                // fprintf(stderr, "Formatted output is not currently implemented, sorry.\n");
+                doFormat = true;
             }
             else if (strncmp(pszCalculation, "fmtoff", 6) == 0) {
                 doFormat = false;

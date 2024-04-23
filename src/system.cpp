@@ -82,22 +82,57 @@ string toString(mpfr_t value, int radix) {
 }
 
 string toFormattedString(mpfr_t value, int radix) {
-    string formatted;
-    // string unformatted = toString(value, radix);
+    int     i;
+    int     j;
+    int     k;
+    int     numDigits = 0;
+    char    seperator = ' ';
+    string  s = toString(value, radix);
+    string  out(s.length() * 3, '0');
 
-    // string integerPart = unformatted.substr(0, unformatted.find_last_of("."));
-    // string mantissa = unformatted.substr(unformatted.find_last_of("."));
+    i = s.length() - 1;
+    j = out.length() - 1;
 
-    // switch (radix) {
-    //     case DECIMAL:
-    //         if (integerPart.length() > 3) {
-    //             for (int i = integerPart.length() - 1;i >= 0;i -= 3) {
-    //                 integerPart.insert(integerPart.crend(), ',');
-    //             }
-    //         }
-    //         break;
-    // }
-    // unformatted.
+    switch (radix) {
+        case DECIMAL:
+            numDigits = 3;
+            seperator = ',';
 
-    return formatted;
+            if (s.find_last_of('.') != string::npos) {
+                while (s[i] != '.') {
+                    out[j--] = s[i--];
+                }
+                out[j--] = s[i--];          // Copy the decimal point...
+            }
+            break;
+
+        case HEXADECIMAL:
+        case OCTAL:
+        case BINARY:
+            numDigits = 4;
+            seperator = ' ';
+            break;
+    }
+
+    k = 0;
+
+    while (i >= 0) {
+        out[j--] = s[i--];
+        k++;
+
+        /*
+        ** Add the seperator char...
+        */
+        if (k == numDigits) {
+            out[j--] = seperator;
+            k = 0;
+        }
+    }
+
+    /*
+    ** Trim the output string...
+    */
+    out = out.substr(j + 1, out.length());
+
+    return out;
 }
