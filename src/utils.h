@@ -15,17 +15,15 @@ using namespace std;
 #define BASE2_OUTPUT_LEN                        (sizeof(uint32_t) * 8)
 
 static const char * pszDigits = ".-0123456789abcdefABCDEF";
-static const char * pszWhitespace = " /n/r/t";
 static const char * pszOperators = "+-*/%^:&|~<>";
 static const char * pszLeftBraces = "({[";
 static const char * pszRightBraces = "}])";
 static const char * pszBraces = "({[]})";
-static const char * pszTokens = " /n/r/t({[]})+-*/%^&|~<>";
 
 class Utils {
     public:
         static string & lowercase(string & s ) {
-            for (int i = 0;i < s.length();i++) {
+            for (uint32_t i = 0;i < (uint32_t)s.length();i++) {
                 s[i] = tolower(s[i]);
             }
 
@@ -77,7 +75,7 @@ class Utils {
                 return false;
             }
             else {
-                for (int i = 0;i < token.length();i++) {
+                for (uint32_t i = 0;i < (uint32_t)token.length();i++) {
                     if (!Utils::isDigit(token[i])) {
                         return false;
                     }
@@ -193,7 +191,7 @@ class Utils {
 
         static void hexDump(void * buffer, uint32_t bufferLen)
         {
-            int                     i;
+            uint32_t                i;
             int                     j = 0;
             uint8_t *               buf;
             static char             szASCIIBuf[17];
