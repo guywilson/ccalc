@@ -135,10 +135,12 @@ string toFormattedString(mpfr_t value, int radix) {
         out[j--] = s[i--];
         k++;
 
+        lgLogDebug("toFormattedString: i:%d, j:%d, k:%d", i, j, k);
+
         /*
         ** Add the seperator char...
         */
-        if (k == numDigits) {
+        if (k == numDigits && i >= 0) {
             out[j--] = seperator;
             k = 0;
         }
