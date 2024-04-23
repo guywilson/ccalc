@@ -113,7 +113,12 @@ class Function {
                 _degrees(r, o1);
             }
             else if (f.compare("mem") == 0) {
-                mpfr_cosu(r, o1, 360U, MPFR_RNDA);
+                result.assign(memRetrieve(mpfr_get_ui(o1, MPFR_RNDA)));
+
+                mpfr_clear(r);
+                mpfr_clear(o1);
+
+                return result;
             }
 
             result.assign(toString(r, radix));

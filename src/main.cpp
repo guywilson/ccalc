@@ -96,6 +96,8 @@ static void printUsage(void) {
     printf("\tc\tthe speed of light in a vacuum\n\n");
     printf("Commands supported:\n");
     printf("\tmemstn\tStore the last result in memory location n (0 - 9)\n");
+    printf("\tmemclrn\tClear the memory location n (0 - 9)\n");
+    printf("\tlistmem\tList all memory locations\n");
     printf("\tdec\tSwitch to decimal mode\n");
     printf("\thex\tSwitch to hexadecimal mode\n");
     printf("\tbin\tSwitch to binary mode\n");
@@ -201,7 +203,6 @@ int main(int argc, char ** argv) {
                 lgSetLogLevel(DEFAULT_LOG_LEVEL);
             }
             else if (strncmp(pszCalculation, "fmton", 5) == 0) {
-                // fprintf(stderr, "Formatted output is not currently implemented, sorry.\n");
                 doFormat = true;
             }
             else if (strncmp(pszCalculation, "fmtoff", 6) == 0) {
@@ -210,7 +211,17 @@ int main(int argc, char ** argv) {
             else if (strncmp(pszCalculation, "memst", 5) == 0) {
                 int m = atoi(&pszCalculation[5]);
 
-                memStore(result, m);
+                memStore(toString(result, base), m);
+            }
+            else if (strncmp(pszCalculation, "memclr", 6) == 0) {
+                int m = atoi(&pszCalculation[6]);
+
+                memClear(m);
+            }
+            else if (strncmp(pszCalculation, "listmem", 7) == 0) {
+                for (int m = 0;m < NUM_MEMORY_LOCATIONS;m++) {
+                    printf("\tmem %d -> %s\n", m, memRetrieve(m).c_str());
+                }
             }
             else if (strncmp(pszCalculation, "dec", 3) == 0) {
                 base = DECIMAL;

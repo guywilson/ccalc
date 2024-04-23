@@ -11,16 +11,15 @@
 #include <gmp.h>
 #include <mpfr.h>
 
+#include "calc_error.h"
 #include "logger.h"
 #include "utils.h"
 #include "system.h"
 
 using namespace std;
 
-#define NUM_MEMORY_LOCATIONS         10
-
 static mpfr_prec_t  precision;
-static mpfr_t       memory[NUM_MEMORY_LOCATIONS];
+static string       memory[NUM_MEMORY_LOCATIONS];
 
 void setPrecision(mpfr_prec_t p) {
     precision = p;
@@ -31,17 +30,33 @@ mpfr_prec_t getPrecision(void) {
 }
 
 void memInit(void) {
-    for (int i = 0;i < NUM_MEMORY_LOCATIONS;i++) {
-        mpfr_init2(memory[i], getBasePrecision());
+    for (int m = 0;m < NUM_MEMORY_LOCATIONS;m++) {
+        memory[m].assign("0.00");
     }
 }
 
-void memRetrieve(mpfr_t m, int location) {
-    mpfr_set(m, memory[location], MPFR_RNDA);
+string memRetrieve(int location) {
+    if (location < 0 || location > NUM_MEMORY_LOCATIONS - 1) {
+        throw calc_error("Memory location out of range. Must be between 0 and 9");
+    }
+
+    return memory[location];
 }
 
-void memStore(mpfr_t m, int location) {
-    mpfr_set(memory[location], m, MPFR_RNDA);
+void memStore(string r, int location) {
+    if (location < 0 || location > NUM_MEMORY_LOCATIONS - 1) {
+        throw calc_error("Memory location out of range. Must be between 0 and 9");
+    }
+    
+    memory[location].assign(r);
+}
+
+void memClear(int location) {
+    if (location < 0 || location > NUM_MEMORY_LOCATIONS - 1) {
+        throw calc_error("Memory location out of range. Must be between 0 and 9");
+    }
+    
+    memory[location].assign("0.00");
 }
 
 string toString(mpfr_t value, int radix) {

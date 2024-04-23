@@ -15,6 +15,8 @@ using namespace std;
 #define FORMAT_STRING_LENGTH             32
 #define OUTPUT_MAX_STRING_LENGTH        256
 
+#define NUM_MEMORY_LOCATIONS             10
+
 #define BASE_10                          10
 #define BASE_16                          16
 #define BASE_8                            8
@@ -28,8 +30,9 @@ using namespace std;
 void        setPrecision(mpfr_prec_t p);
 mpfr_prec_t getPrecision(void);
 void        memInit(void);
-void        memRetrieve(mpfr_t m, int location);
-void        memStore(mpfr_t m, int location);
+string      memRetrieve(int location);
+void        memStore(string r, int location);
+void        memClear(int location);
 string      toString(mpfr_t value, int radix);
 string      toFormattedString(mpfr_t value, int radix);
 
