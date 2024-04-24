@@ -80,7 +80,7 @@ string toString(mpfr_t value, int radix) {
 
         case BINARY:
             char * binaryStr = Utils::getBase2String(mpfr_get_ui(value, MPFR_RNDA));
-            snprintf(szOutputString, strlen(binaryStr), "%s", binaryStr);
+            snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, "%s", binaryStr);
             free(binaryStr);
             break;
     }
