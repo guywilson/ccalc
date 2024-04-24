@@ -110,7 +110,7 @@ int test(void) {
 
     setPrecision(0U);
     base = HEXADECIMAL;
-    testEvaluate("(F100 < 3) + (AA > 1)", base, "00078855") ? numTestsPassed++ : numTestsFailed++;
+    testEvaluate("(F100 < 3) + (AA > 1)", base, "0000000000078855") ? numTestsPassed++ : numTestsFailed++;
     totalTests++;
 
     setPrecision(0U);
