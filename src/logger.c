@@ -6,13 +6,79 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <pthread.h>
-#include <strutils.h>
+#include <ctype.h>
 
 #include "timeutils.h"
 #include "logger.h"
 
 #define LOG_BUFFER_LENGTH                   4096
 
+static char * str_trim_trailing(const char * str)
+{
+    int             i = 0;
+    int             endPos = 0;
+
+    if (str != NULL) {
+        endPos = strlen(str) - 1;
+        i = endPos;
+
+        while (isspace(str[i--]) && i > 0);
+
+        if (i > 0) {
+            endPos = i + 1;
+        }
+
+        return strndup(str, endPos + 1);
+    }
+    else {
+        return NULL;
+    }
+}
+
+static char * str_trim_leading(const char * str)
+{
+    int             i = 0;
+    int             startPos = 0;
+    int             endPos = 0;
+
+    if (str != NULL) {
+        endPos = strlen(str);
+
+        while (isspace(str[i]) && i < endPos) {
+            i++;
+        }
+
+        if (i > 0) {
+            startPos = i;
+        }
+        else {
+            endPos += 1;
+        }
+
+        return strndup(&str[startPos], endPos);
+    }
+    else {
+        return NULL;
+    }
+}
+
+static char * str_trim(const char * str)
+{
+    char * strTrailing;
+    char * strLeading;
+
+    if (str != NULL) {
+        strTrailing = str_trim_trailing(str);
+        strLeading = str_trim_leading(strTrailing);
+
+        free(strTrailing);
+
+        return strLeading;
+    }
+    else {
+        return NULL;
+    }
+}
 
 struct _log_handle_t {
     FILE *          fptr;

@@ -45,7 +45,7 @@ LIBFLAGS = -L /opt/homebrew/lib -L ${HOME}/Library/lib
 
 # Libraries
 STDLIBS = 
-EXTLIBS = -lstrutils -lreadline -lmpfr -lgmp
+EXTLIBS = -lreadline -lmpfr -lgmp
 
 COMPILE.cpp = $(CPP) $(CPPFLAGS) $(DEPFLAGS) $(INCLUDEFLAGS) -o $@
 COMPILE.c = $(C) $(CFLAGS) $(DEPFLAGS) $(INCLUDEFLAGS) -o $@
