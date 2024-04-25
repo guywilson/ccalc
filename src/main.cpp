@@ -128,7 +128,7 @@ static const char * getBaseString(int base) {
             return "BIN";
 
         default:
-            return "DEC";
+            return "CUS";
     }
 }
 
@@ -147,6 +147,7 @@ int main(int argc, char ** argv) {
     using_history();
 
     mpfr_init2(result, getBasePrecision());
+    mpfr_set_d(result, 0.0, MPFR_RNDA);
 
     memInit();
     setPrecision(DEFAULT_PRECISION);
@@ -188,6 +189,24 @@ int main(int argc, char ** argv) {
                 }
                 else {
                     setPrecision(precision);
+                }
+            }
+            else if (strncmp(pszCalculation, "setb", 4) == 0) {
+                int originalBase = base;
+
+                base = atoi(&pszCalculation[4]);
+
+                if (base < 2 || base > MAX_BASE) {
+                    fprintf(stderr, "Base must be between 1 and %d\n", MAX_BASE);
+                    base = originalBase;
+                }
+                else {
+                    printf("= ");
+
+                    mpfr_out_str(stdout, base, MAX_PRECISION, result, MPFR_RNDA);
+                    
+                    printf("\n");
+                    fflush(stdout);
                 }
             }
             else if (strncmp(pszCalculation, "dbgon", 5) == 0) {
@@ -275,14 +294,24 @@ int main(int argc, char ** argv) {
                 try {
                     evaluate(result, pszCalculation, base);
 
-                    if (doFormat) {
-                        answer.assign(toFormattedString(result, base));
+                    if (base != BASE_16 && base != BASE_10 && base != BASE_8 && base != BASE_2) {
+                        printf("%s = ", pszCalculation);
+
+                        mpfr_out_str(stdout, base, MAX_PRECISION, result, MPFR_RNDA);
+
+                        printf("\n");
+                        fflush(stdout);
                     }
                     else {
-                        answer.assign(toString(result, base));
-                    }
+                        if (doFormat) {
+                            answer.assign(toFormattedString(result, base));
+                        }
+                        else {
+                            answer.assign(toString(result, base));
+                        }
 
-                    printf("%s = %s\n", pszCalculation, answer.c_str());
+                        printf("%s = %s\n", pszCalculation, answer.c_str());
+                    }
                 }
                 catch (calc_error & e) {
                     printf("Calculation failed for %s: %s\n", pszCalculation, e.what());

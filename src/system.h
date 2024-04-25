@@ -17,6 +17,8 @@ using namespace std;
 
 #define NUM_MEMORY_LOCATIONS             10
 
+#define MAX_BASE                         62
+
 #define BASE_10                          10
 #define BASE_16                          16
 #define BASE_8                            8
