@@ -13,6 +13,19 @@
 
 #define LOG_BUFFER_LENGTH                   4096
 
+struct _log_handle_t {
+    FILE *          fptr;
+
+    int             logLevel;
+    bool            isInstantiated;
+};
+
+static log_handle_t         _log;
+static pthread_mutex_t      _mutex = PTHREAD_MUTEX_INITIALIZER;
+static char                 _logBuffer[LOG_BUFFER_LENGTH];
+
+static log_handle_t *       hlog = &_log;
+
 static char * str_trim_trailing(const char * str)
 {
     int             i = 0;
@@ -80,29 +93,6 @@ static char * str_trim(const char * str)
     }
 }
 
-struct _log_handle_t {
-    FILE *          fptr;
-
-    int             logLevel;
-    bool            isInstantiated;
-};
-
-static log_handle_t         _log;
-static pthread_mutex_t      _mutex = PTHREAD_MUTEX_INITIALIZER;
-static char                 _logBuffer[LOG_BUFFER_LENGTH];
-
-
-static log_handle_t * _lgGetHandle(void) {
-    static log_handle_t *       pLog = NULL;
-
-    if (pLog == NULL) {
-        pLog = &_log;
-        pLog->isInstantiated = false;
-    }
-
-    return pLog;
-}
-
 static int _logLevel_atoi(const char * pszLoggingLevel) {
     char *          pszLogLevel;
     char *          pszToken;
@@ -145,7 +135,6 @@ static int _logLevel_atoi(const char * pszLoggingLevel) {
 int _log_message(int logLevel, bool addCR, const char * fmt, va_list args) {
     int                 bytesWritten = 0;
     char                szTimestamp[TIMESTAMP_STR_LEN];
-    log_handle_t *      hlog = _lgGetHandle();
 
 	pthread_mutex_lock(&_mutex);
 
@@ -203,19 +192,17 @@ int _log_message(int logLevel, bool addCR, const char * fmt, va_list args) {
 }
 
 int lgOpen(const char * pszLogFile, const char * pszLogFlags) {
-    log_handle_t * pLog = _lgGetHandle();
+    if (!hlog->isInstantiated) {
+        hlog->fptr = fopen(pszLogFile, "a");
 
-    if (!pLog->isInstantiated) {
-        pLog->fptr = fopen(pszLogFile, "a");
-
-        if (pLog->fptr == NULL) {
+        if (hlog->fptr == NULL) {
             fprintf(stderr, "Failed to open log file '%s': %s\n", pszLogFile, strerror(errno));
             return -1;
         }
 
-        pLog->logLevel = _logLevel_atoi(pszLogFlags);
+        hlog->logLevel = _logLevel_atoi(pszLogFlags);
 
-        pLog->isInstantiated = true;
+        hlog->isInstantiated = true;
     }
     else {
         fprintf(stderr, "Logger already initialised. You should only call lgOpen() once\n");
@@ -226,14 +213,12 @@ int lgOpen(const char * pszLogFile, const char * pszLogFlags) {
 }
 
 int lgOpenStdout(const char * pszLogFlags) {
-    log_handle_t * pLog = _lgGetHandle();
+    if (!hlog->isInstantiated) {
+        hlog->fptr = stdout;
 
-    if (!pLog->isInstantiated) {
-        pLog->fptr = stdout;
+        hlog->logLevel = _logLevel_atoi(pszLogFlags);
 
-        pLog->logLevel = _logLevel_atoi(pszLogFlags);
-
-        pLog->isInstantiated = true;
+        hlog->isInstantiated = true;
     }
     else {
         fprintf(stderr, "Logger already initialised. You should only call lgOpen() once\n");
@@ -244,8 +229,6 @@ int lgOpenStdout(const char * pszLogFlags) {
 }
 
 void lgClose(void) {
-    log_handle_t *      hlog = _lgGetHandle();
-
     fclose(hlog->fptr);
 
     hlog->logLevel = 0;
@@ -253,26 +236,18 @@ void lgClose(void) {
 }
 
 void lgSetLogLevel(int logLevel) {
-    log_handle_t *      hlog = _lgGetHandle();
-
     hlog->logLevel = logLevel;
 }
 
 int lgGetLogLevel(void) {
-    log_handle_t *      hlog = _lgGetHandle();
-
     return hlog->logLevel;
 }
 
 bool lgCheckLogLevel(int logLevel) {
-    log_handle_t *      hlog = _lgGetHandle();
-
     return ((hlog->logLevel & logLevel) == logLevel ? true : false);
 }
 
 void lgNewline(void) {
-    log_handle_t *      hlog = _lgGetHandle();
-
     fprintf(hlog->fptr, "\n");
 }
 
