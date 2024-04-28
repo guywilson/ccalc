@@ -97,7 +97,8 @@ static void printUsage(void) {
     printf("Commands supported:\n");
     printf("\tmemstn\tStore the last result in memory location n (0 - 9)\n");
     printf("\tmemclrn\tClear the memory location n (0 - 9)\n");
-    printf("\tlistmem\tList all memory locations\n");
+    printf("\tclrall\tClear all memory locations\n");
+    printf("\tlistall\tList all memory locations\n");
     printf("\tdec\tSwitch to decimal mode\n");
     printf("\thex\tSwitch to hexadecimal mode\n");
     printf("\tbin\tSwitch to binary mode\n");
@@ -237,7 +238,12 @@ int main(int argc, char ** argv) {
 
                 memClear(m);
             }
-            else if (strncmp(pszCalculation, "listmem", 7) == 0) {
+            else if (strncmp(pszCalculation, "clrall", 6) == 0) {
+                for (int m = 0;m < NUM_MEMORY_LOCATIONS;m++) {
+                    memClear(m);
+                }
+            }
+            else if (strncmp(pszCalculation, "listall", 7) == 0) {
                 for (int m = 0;m < NUM_MEMORY_LOCATIONS;m++) {
                     printf("\tmem %d -> %s\n", m, memRetrieve(m).c_str());
                 }
