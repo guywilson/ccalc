@@ -142,6 +142,14 @@ static void _convertToRPN(tokenizer_t * tokenizer, Queue & tokenQueue) {
                 }
             }
         }
+        else {
+            throw invalid_token_error(
+                        calc_error::buildMsg(
+                                    "_convertToRPN(): Invalid token: %s", 
+                                    token.c_str()), 
+                        __FILE__, 
+                        __LINE__);
+        }
     }
 
     lgLogDebug("Num items in stack %d", (int)operatorStack.size());
