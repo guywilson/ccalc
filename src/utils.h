@@ -85,6 +85,21 @@ class Utils {
             return true;
         }
 
+        static bool isOperand(const char * token) {
+            if (token[0] == '-' && strlen(token) == 1) {
+                return false;
+            }
+            else {
+                for (uint32_t i = 0;i < (uint32_t)strlen(token);i++) {
+                    if (!Utils::isDigit(token[i])) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         static bool isConstant(string token) {
             Utils::lowercase(token);
 

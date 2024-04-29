@@ -28,6 +28,7 @@ using namespace std;
 #define HEXADECIMAL                     BASE_16
 #define OCTAL                           BASE_8
 #define BINARY                          BASE_2
+#define STATISTIC                       1
 
 void        setPrecision(mpfr_prec_t p);
 mpfr_prec_t getPrecision(void);
