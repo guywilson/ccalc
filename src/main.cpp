@@ -315,7 +315,7 @@ int main(int argc, char ** argv) {
                     if (stats.size() > 0) {
                         string addition(stats[0] + " + ");
 
-                        for (int s = 1;s < stats.size();s++) {
+                        for (uint32_t s = 1;s < (uint32_t)stats.size();s++) {
                             addition.append(stats[s]);
 
                             if (s < stats.size() - 1) {
@@ -348,7 +348,7 @@ int main(int argc, char ** argv) {
                         char    szCount[40];
                         string  average("(" + stats[0] + " + ");
 
-                        for (int s = 1;s < stats.size();s++) {
+                        for (uint32_t s = 1;s < (uint32_t)stats.size();s++) {
                             average.append(stats[s]);
 
                             if (s < stats.size() - 1) {
@@ -386,7 +386,7 @@ int main(int argc, char ** argv) {
                         int     minIndex = 0;
                         mpfr_t  minValue;
 
-                        for (int s = 1;s < stats.size();s++) {
+                        for (uint32_t s = 1;s < (uint32_t)stats.size();s++) {
                             double v = strtod(stats[s].c_str(), NULL);
 
                             if (v < min) {
@@ -424,7 +424,7 @@ int main(int argc, char ** argv) {
                         int     maxIndex = 0;
                         mpfr_t  maxValue;
 
-                        for (int s = 1;s < stats.size();s++) {
+                        for (uint32_t s = 1;s < (uint32_t)stats.size();s++) {
                             double v = strtod(stats[s].c_str(), NULL);
 
                             if (v > max) {
@@ -456,7 +456,7 @@ int main(int argc, char ** argv) {
                 }
             }
             else if (strncmp(pszCalculation, "clrstat", 7) == 0) {
-                for (int s = 0;s < stats.size();s++) {
+                for (uint32_t s = 0;s < (uint32_t)stats.size();s++) {
                     stats[s].clear();
                     stats[s].resize(0);
                 }
