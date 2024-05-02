@@ -40,16 +40,14 @@ CPPFLAGS_DBG=$(CPPFLAGS_BASE) -g
 CPPFLAGS=$(CPPFLAGS_REL)
 CFLAGS=$(CFLAGS_REL)
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP)/$*.Td
-INCLUDEFLAGS = -I /usr/local/MacGPG2/include -I /opt/homebrew/include -I ${HOME}/Library/include
-LIBFLAGS = -L /opt/homebrew/lib -L ${HOME}/Library/lib
 
 # Libraries
 STDLIBS = 
 EXTLIBS = -lreadline -lmpfr -lgmp
 
-COMPILE.cpp = $(CPP) $(CPPFLAGS) $(DEPFLAGS) $(INCLUDEFLAGS) -o $@
-COMPILE.c = $(C) $(CFLAGS) $(DEPFLAGS) $(INCLUDEFLAGS) -o $@
-LINK.o = $(LINKER) $(LIBFLAGS) $(STDLIBS) -o $@
+COMPILE.cpp = $(CPP) $(CPPFLAGS) $(DEPFLAGS) -o $@
+COMPILE.c = $(C) $(CFLAGS) $(DEPFLAGS) -o $@
+LINK.o = $(LINKER) $(STDLIBS) -o $@
 
 CSRCFILES = $(wildcard $(SOURCE)/*.c)
 CPPSRCFILES = $(wildcard $(SOURCE)/*.cpp)
