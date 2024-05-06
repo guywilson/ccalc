@@ -13,7 +13,7 @@ using namespace std;
 #define MAX_PRECISION                           80
 
 #define FORMAT_STRING_LENGTH             32
-#define OUTPUT_MAX_STRING_LENGTH        256
+#define OUTPUT_MAX_STRING_LENGTH       4096
 
 #define NUM_MEMORY_LOCATIONS             10
 
@@ -36,7 +36,7 @@ void        memInit(void);
 string      memRetrieve(int location);
 void        memStore(string r, int location);
 void        memClear(int location);
-string      toString(mpfr_t value, int radix);
-string      toFormattedString(mpfr_t value, int radix);
+string      toString(mpfr_t value, int radix, long precision);
+string      toFormattedString(mpfr_t value, int radix, long precision);
 
 #endif

@@ -121,7 +121,7 @@ class Function {
                 return result;
             }
 
-            result.assign(toString(r, radix));
+            result.assign(toString(r, radix, getBasePrecision()));
 
             mpfr_clear(r);
             mpfr_clear(o1);

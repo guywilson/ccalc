@@ -31,7 +31,7 @@ static bool testEvaluate(const char * pszCalculation, int radix, const char * ps
         return false;
     }
 
-    result = toString(r, radix);
+    result = toString(r, radix, (long)getPrecision());
 
     if (strncmp(result.c_str(), pszExpectedResult, strlen(pszExpectedResult)) == 0) {
         printf("**** Success :) - [%s] Expected '%s', got '%s'\n", pszCalculation, pszExpectedResult, result.c_str());

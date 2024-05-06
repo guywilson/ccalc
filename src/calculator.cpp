@@ -178,7 +178,7 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
         else if (strncmp(pszCommand, "memst", 5) == 0) {
             int m = atoi(&pszCommand[5]);
 
-            memStore(toString(result, *mode), m);
+            memStore(toString(result, *mode, (long)getPrecision()), m);
         }
         else if (strncmp(pszCommand, "memclr", 6) == 0) {
             int m = atoi(&pszCommand[6]);
@@ -199,10 +199,10 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
             *mode = DECIMAL;
             
             if (doFormat) {
-                answer.assign(toFormattedString(result, *mode));
+                answer.assign(toFormattedString(result, *mode, (long)getPrecision()));
             }
             else {
-                answer.assign(toString(result, *mode));
+                answer.assign(toString(result, *mode, (long)getPrecision()));
             }
 
             printf("= %s\n", answer.c_str());
@@ -211,10 +211,10 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
             *mode = HEXADECIMAL;
 
             if (doFormat) {
-                answer.assign(toFormattedString(result, *mode));
+                answer.assign(toFormattedString(result, *mode, 0L));
             }
             else {
-                answer.assign(toString(result, *mode));
+                answer.assign(toString(result, *mode, 0L));
             }
 
             printf("= %s\n", answer.c_str());
@@ -223,10 +223,10 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
             *mode = BINARY;
 
             if (doFormat) {
-                answer.assign(toFormattedString(result, *mode));
+                answer.assign(toFormattedString(result, *mode, 0L));
             }
             else {
-                answer.assign(toString(result, *mode));
+                answer.assign(toString(result, *mode, 0L));
             }
 
             printf("= %s\n", answer.c_str());
@@ -235,10 +235,10 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
             *mode = OCTAL;
 
             if (doFormat) {
-                answer.assign(toFormattedString(result, *mode));
+                answer.assign(toFormattedString(result, *mode, 0L));
             }
             else {
-                answer.assign(toString(result, *mode));
+                answer.assign(toString(result, *mode, 0L));
             }
 
             printf("= %s\n", answer.c_str());
@@ -262,10 +262,10 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
                     evaluate(result, addition.c_str(), DECIMAL);
 
                     if (doFormat) {
-                        answer.assign(toFormattedString(result, DECIMAL));
+                        answer.assign(toFormattedString(result, DECIMAL, (long)getPrecision()));
                     }
                     else {
-                        answer.assign(toString(result, DECIMAL));
+                        answer.assign(toString(result, DECIMAL, (long)getPrecision()));
                     }
 
                     printf("SUM = %s\n", answer.c_str());
@@ -299,10 +299,10 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
                     evaluate(result, average.c_str(), DECIMAL);
 
                     if (doFormat) {
-                        answer.assign(toFormattedString(result, DECIMAL));
+                        answer.assign(toFormattedString(result, DECIMAL, (long)getPrecision()));
                     }
                     else {
-                        answer.assign(toString(result, DECIMAL));
+                        answer.assign(toString(result, DECIMAL, (long)getPrecision()));
                     }
 
                     printf("AVG = %s\n", answer.c_str());
@@ -335,10 +335,10 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
                     mpfr_set_str(minValue, stats[minIndex].c_str(), DECIMAL, MPFR_RNDA);
 
                     if (doFormat) {
-                        answer.assign(toFormattedString(minValue, DECIMAL));
+                        answer.assign(toFormattedString(minValue, DECIMAL, (long)getPrecision()));
                     }
                     else {
-                        answer.assign(toString(minValue, DECIMAL));
+                        answer.assign(toString(minValue, DECIMAL, (long)getPrecision()));
                     }
 
                     mpfr_clear(minValue);
@@ -373,10 +373,10 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
                     mpfr_set_str(maxValue, stats[maxIndex].c_str(), DECIMAL, MPFR_RNDA);
 
                     if (doFormat) {
-                        answer.assign(toFormattedString(maxValue, DECIMAL));
+                        answer.assign(toFormattedString(maxValue, DECIMAL, (long)getPrecision()));
                     }
                     else {
-                        answer.assign(toString(maxValue, DECIMAL));
+                        answer.assign(toString(maxValue, DECIMAL, (long)getPrecision()));
                     }
 
                     mpfr_clear(maxValue);
@@ -419,10 +419,10 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
                     }
                     else {
                         if (doFormat) {
-                            answer.assign(toFormattedString(result, *mode));
+                            answer.assign(toFormattedString(result, *mode, (long)getPrecision()));
                         }
                         else {
-                            answer.assign(toString(result, *mode));
+                            answer.assign(toString(result, *mode, (long)getPrecision()));
                         }
 
                         printf("%s = %s\n", pszCommand, answer.c_str());

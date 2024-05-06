@@ -59,14 +59,14 @@ void memClear(int location) {
     memory[location].assign("0.00");
 }
 
-string toString(mpfr_t value, int radix) {
-    char            szOutputString[OUTPUT_MAX_STRING_LENGTH];
+string toString(mpfr_t value, int radix, long precision) {
+    static char     szOutputString[OUTPUT_MAX_STRING_LENGTH];
     char            szFormatString[FORMAT_STRING_LENGTH];
     string          outputStr;
 
     switch (radix) {
         case DECIMAL:
-            snprintf(szFormatString, FORMAT_STRING_LENGTH, "%%.%ldRf", (long)getPrecision());
+            snprintf(szFormatString, FORMAT_STRING_LENGTH, "%%.%ldRf", precision);
             mpfr_snprintf(szOutputString, OUTPUT_MAX_STRING_LENGTH, szFormatString, value);
             break;
 
@@ -96,13 +96,13 @@ string toString(mpfr_t value, int radix) {
     return outputStr;
 }
 
-string toFormattedString(mpfr_t value, int radix) {
+string toFormattedString(mpfr_t value, int radix, long precision) {
     int     i;
     int     j;
     int     k;
     int     numDigits = 0;
     char    seperator = ' ';
-    string  s = toString(value, radix);
+    string  s = toString(value, radix, precision);
     string  out(s.length() * 3, '0');
 
     i = s.length() - 1;

@@ -106,7 +106,7 @@ class Operator {
                     break;
             }
 
-            result.assign(toString(r, radix));
+            result.assign(toString(r, radix, getBasePrecision()));
 
             lgLogDebug("Result = %s", result.c_str());
 
