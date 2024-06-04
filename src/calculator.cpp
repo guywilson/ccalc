@@ -26,6 +26,8 @@ using namespace std;
 #define LIST_SIZE                   128
 #define STACK_SIZE                   64
 
+static vector<string>               stats;
+
 const char * pszWarranty = 
     "This program comes with ABSOLUTELY NO WARRANTY.\n" \
     "This is free software, and you are welcome to redistribute it\n" \
@@ -110,7 +112,6 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
     bool                doFormat = true;
     long                precision;
     string              answer;
-    vector<string>      stats;
 
     if (strlen(pszCommand) > 0) {
         if (strncmp(pszCommand, "exit", 4) == 0 || strncmp(pszCommand, "quit", 4) == 0 || pszCommand[0] == 'q') {
