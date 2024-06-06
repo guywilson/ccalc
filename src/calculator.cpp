@@ -411,11 +411,11 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
                     evaluate(result, pszCommand, *mode);
 
                     if (*mode != BASE_16 && *mode != BASE_10 && *mode != BASE_8 && *mode != BASE_2) {
-                        printf("%s = ", pszCommand);
+                        printf("\n%s\n        = ", pszCommand);
 
                         mpfr_out_str(stdout, *mode, MAX_PRECISION, result, MPFR_RNDA);
 
-                        printf("\n");
+                        printf("\n\n");
                         fflush(stdout);
                     }
                     else {
@@ -426,7 +426,7 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
                             answer.assign(toString(result, *mode, (long)getPrecision()));
                         }
 
-                        printf("%s = %s\n", pszCommand, answer.c_str());
+                        printf("\n%s\n        = %s\n\n", pszCommand, answer.c_str());
                     }
                 }
             }
