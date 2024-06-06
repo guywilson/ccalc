@@ -140,24 +140,6 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
                 setPrecision(precision);
             }
         }
-        else if (strncmp(pszCommand, "setb", 4) == 0) {
-            int originalBase = *mode;
-
-            *mode = atoi(&pszCommand[4]);
-
-            if (*mode < 2 || *mode > MAX_BASE) {
-                fprintf(stderr, "Base must be between 1 and %d\n", MAX_BASE);
-                *mode = originalBase;
-            }
-            else {
-                printf("= ");
-
-                mpfr_out_str(stdout, *mode, MAX_PRECISION, result, MPFR_RNDA);
-                
-                printf("\n");
-                fflush(stdout);
-            }
-        }
         else if (strncmp(pszCommand, "dbgon", 5) == 0) {
             lgSetLogLevel(LOG_LEVEL_ALL);
         }
@@ -410,24 +392,14 @@ bool processCommand(char * pszCommand, mpfr_t result, int * mode) {
                 else {
                     evaluate(result, pszCommand, *mode);
 
-                    if (*mode != BASE_16 && *mode != BASE_10 && *mode != BASE_8 && *mode != BASE_2) {
-                        printf("\n%s\n        = ", pszCommand);
-
-                        mpfr_out_str(stdout, *mode, MAX_PRECISION, result, MPFR_RNDA);
-
-                        printf("\n\n");
-                        fflush(stdout);
+                    if (doFormat) {
+                        answer.assign(toFormattedString(result, *mode, (long)getPrecision()));
                     }
                     else {
-                        if (doFormat) {
-                            answer.assign(toFormattedString(result, *mode, (long)getPrecision()));
-                        }
-                        else {
-                            answer.assign(toString(result, *mode, (long)getPrecision()));
-                        }
-
-                        printf("\n%s\n        = %s\n\n", pszCommand, answer.c_str());
+                        answer.assign(toString(result, *mode, (long)getPrecision()));
                     }
+
+                    printf("\n%s\n        = %s\n\n", pszCommand, answer.c_str());
                 }
             }
             catch (calc_error & e) {
