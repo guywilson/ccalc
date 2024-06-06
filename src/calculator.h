@@ -20,8 +20,6 @@
 
 #define DEFAULT_LOG_LEVEL                       (LOG_LEVEL_FATAL | LOG_LEVEL_ERROR)
 
-void        printBanner(void);
-bool        processCommand(char * pszCommand, mpfr_t result, int * mode);
 void        evaluate(mpfr_t result, const char * pszExpression, int radix);
 
 #endif
