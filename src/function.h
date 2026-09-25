@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 
 #include <gmp.h>
@@ -6,9 +8,6 @@
 #include "token.h"
 #include "operator.h"
 #include "operand.h"
-
-#ifndef __INCL_FUNCTION
-#define __INCL_FUNCTION
 
 static inline bool isTokenFunctionSin(const std::string & token) {
     return (token.compare("sin") == 0);
@@ -308,5 +307,3 @@ class Function : public Operator {
             return result.toString(INTERMEDIATE_PRECISION);
         }
 };
-
-#endif

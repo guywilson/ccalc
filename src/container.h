@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include <stack>
@@ -9,9 +11,6 @@
 #include "token.h"
 #include "operand.h"
 #include "operator.h"
-
-#ifndef __INCL_CONTAINER
-#define __INCL_CONTAINER
 
 class BaseContainer {
     public:
@@ -147,5 +146,3 @@ class TokenQueue : public BaseContainer {
             }
         }
 };
-
-#endif

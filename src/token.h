@@ -1,7 +1,6 @@
-#include <string>
+#pragma once
 
-#ifndef __INCL_TOKEN
-#define __INCL_TOKEN
+#include <string>
 
 class Token {
     private:
@@ -31,5 +30,3 @@ class Token {
             return "Token";
         }
 };
-
-#endif

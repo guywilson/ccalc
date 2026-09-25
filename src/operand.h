@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 
 #include <ctype.h>
@@ -8,9 +10,6 @@
 
 #include "system.h"
 #include "token.h"
-
-#ifndef __INCL_OPERAND
-#define __INCL_OPERAND
 
 #define MPFR_BASE_PRECISION           1024L
 
@@ -397,5 +396,3 @@ class Operand : public Token {
             return result;
         }
 };
-
-#endif

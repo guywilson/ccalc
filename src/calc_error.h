@@ -1,11 +1,10 @@
+#pragma once
+
 #include <exception>
 #include <string>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-
-#ifndef __CALC_ERROR
-#define __CALC_ERROR
 
 #define MESSAGE_BUFFER_LEN                  4096
 
@@ -79,5 +78,3 @@ class calc_validation_error : public calc_error {
         calc_validation_error(const char * msg) : calc_error(msg) {}
         calc_validation_error(const char * msg, const char * file, int line) : calc_error(msg, file, line) {}
 };
-
-#endif

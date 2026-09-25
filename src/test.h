@@ -1,8 +1,7 @@
+#pragma once
+
 #include <string>
 #include <vector>
-
-#ifndef __INCL_TEST_FRAMEWORK
-#define __INCL_TEST_FRAMEWORK
 
 typedef struct {
     std::string expression;
@@ -57,5 +56,3 @@ class TestFramework {
             return false;
         }
 };
-
-#endif

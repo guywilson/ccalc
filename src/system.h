@@ -1,7 +1,6 @@
-#include <string>
+#pragma once
 
-#ifndef __INCL_SYSTEM
-#define __INCL_SYSTEM
+#include <string>
 
 #define BASE_10                          10
 #define BASE_16                          16
@@ -38,5 +37,3 @@ class System {
             radix = r;
         }
 };
-
-#endif

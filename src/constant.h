@@ -1,12 +1,11 @@
+#pragma once
+
 #include <string>
 
 #include <gmp.h>
 #include <mpfr.h>
 
 #include "operand.h"
-
-#ifndef __INCL_CONSTANT
-#define __INCL_CONSTANT
 
 #define CONSTANT_C                          299792458U
 
@@ -42,5 +41,3 @@ class Constant : public Operand {
             return (isTokenPi(token) || isTokenEu(token) || isTokenC(token));
         }
 };
-
-#endif

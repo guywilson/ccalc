@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include <deque>
@@ -5,9 +7,6 @@
 
 #include "container.h"
 #include "token.h"
-
-#ifndef __INCL_EXPRESSION
-#define __INCL_EXPRESSION
 
 // A custom facet to handle thousands separators
 struct ThousandsSeparator : std::numpunct<char> {
@@ -34,5 +33,3 @@ class Expression {
 
         std::string evaluate(const std::string & expression);
 };
-
-#endif

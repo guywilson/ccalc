@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include <string.h>
@@ -5,9 +7,6 @@
 
 #include "container.h"
 #include "token.h"
-
-#ifndef __INCL_TOKENIZER
-#define __INCL_TOKENIZER
 
 class Tokenizer {
     private:
@@ -24,5 +23,3 @@ class Tokenizer {
 
         TokenArray tokenize();
 };
-
-#endif

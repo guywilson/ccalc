@@ -1,9 +1,8 @@
+#pragma once
+
 #include <string>
 
 #include "token.h"
-
-#ifndef __INCL_BRACE
-#define __INCL_BRACE
 
 class Brace : public Token {
     private:
@@ -47,5 +46,3 @@ class Brace : public Token {
             return isLeft;
         }
 };
-
-#endif
