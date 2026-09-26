@@ -45,8 +45,13 @@ static void printBanner(void) {
     int year = localTime->tm_year + 1900;
 
 	std::cout << std::endl << "*** Welcome to CCALC v" << getVersion() << " ***" << std::endl << std::endl;
+    std::cout << "*************************************************************" << std::endl;
+    std::cout << "*                                                           *" << std::endl;
+    std::cout << "*                      FREE PALESTINE!                      *" << std::endl;
+    std::cout << "*                                                           *" << std::endl;
+    std::cout << "*************************************************************" << std::endl << std::endl;
     std::cout << "A cmd line scientific calculator. Copyright © Guy Wilson " << year << std::endl;
-	std::cout << "Type a calculation or command at the prompt, type 'help' for info." << std::endl << std::endl;
+	std::cout << "Type a calculation or command, or type 'help' for info." << std::endl << std::endl;
 }
 
 static void printUsage(void) {
